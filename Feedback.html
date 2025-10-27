@@ -1050,12 +1050,14 @@
             if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
             if(fileInfo && timerEl) fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
             
-            setStatus('Transcription en cours...');
-            if(btnRecord) btnRecord.disabled = true; if(btnStop) btnStop.disabled = true;
-            
-            transcribeAudio(audioBlob); 
-            
-            if ($('#controlsWrap')) $('#controlsWrap').classList.add('hidden'); // <-- AJOUTEZ CETTE LIGNE
+            setStatus('Prêt à l’envoi');
+            audioTranscription = "[CLIENT_TRANSCRIPTION_DISABLED]"; // C'est un placeholder
+
+            // On affiche un message pour rassurer l'utilisateur
+            if(transcriptionText) transcriptionText.textContent = "La transcription sera générée par le serveur après l'envoi.";
+            if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
+
+            // On active le bouton "Envoyer"
             updateSendState();
             
             mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
@@ -1163,32 +1165,6 @@
         });
       }
 
-      /** Appelle le backend pour transcrire l'audio. */
-      async function transcribeAudio(audioBlob) {
-         // ... (fonction inchangée) ...
-        try {
-          setStatus('Conversion audio...'); const fileBase64 = await blobToBase64(audioBlob);
-          setStatus('Transcription en cours...');
-          const payload = { action: "transcribe", mimeType: mimeType, fileBase64: fileBase64 };
-          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
-
-          if (json.ok === false || typeof json.transcription !== 'string') { throw new Error(json.error || 'Réponse transcription invalide.'); }
-
-          audioTranscription = json.transcription || "[Transcription vide]";
-          if(transcriptionText) transcriptionText.textContent = audioTranscription;
-          setStatus('Prêt à l’envoi'); toast('Transcription réussie.', 'ok');
-        } catch (err) {
-          console.error('Erreur transcription:', err);
-          toast(`Transcription échouée (${err.message}). Envoi audio seul possible.`, 'err');
-          setStatus('Erreur transcription');
-          if(transcriptionText) transcriptionText.textContent = `[Échec transcription. Envoi audio seul.]`;
-          audioTranscription = "[TRANSCRIPTION_FAILED]";
-        } finally {
-          if(btnRecord) btnRecord.disabled = false; if(btnStop) btnStop.disabled = true;
-          updateSendState();
-        }
-      }
-      
       if(btnSend) btnSend.addEventListener('click', submitOne);
 
       /** Envoie la réponse finale. */
