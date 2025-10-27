@@ -281,7 +281,7 @@
 
         <div class="text-right pt-2">
           <!-- CORRECTION: Changé type="button" en type="submit" -->
-          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
+          <button id="saveProfileBtn" type="button" class="btn btn-primary">Valider et commencer</button>
         </div>
       </form>
     </div>
@@ -521,9 +521,7 @@
       // CORRECTION : Rétablissement du 'submit' listener qui avait disparu
 let isSubmittingProfile = false; // AJOUT : Flag de protection
 
-metaForm.addEventListener('submit', (e) => {
-  e.preventDefault(); // Empêcher le rechargement de la page
-  e.stopPropagation(); // AJOUT : Bloquer la propagation
+saveProfileBtn.addEventListener('click', (e) => {
   
   // AJOUT : Empêcher les soumissions multiples
   if (isSubmittingProfile) {
