@@ -280,7 +280,8 @@
         </fieldset>
 
         <div class="text-right pt-2">
-          <button id="saveProfileBtn" type="button" class="btn btn-primary">Valider et commencer</button>
+          <!-- CORRECTION: Changé type="button" en type="submit" -->
+          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
         </div>
       </form>
     </div>
@@ -413,12 +414,12 @@
       STATUS_PREFIX: 'chops_voiceform_status_'
     };
 
-    /** Enregistre les métadonnées de profil */
+    /** Enregistre les métadonnéess de profil */
     function saveMeta(meta) {
       localStorage.setItem(LS_KEYS.META, JSON.stringify(meta));
     }
     
-    /** Charge les métadonnées de profil */
+    /** Charge les métadonnéess de profil */
     function loadMeta() {
       try {
         return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}');
@@ -517,7 +518,10 @@
       /**
        * Gère la soumission du formulaire de profil.
        */
-      saveProfileBtn.addEventListener('click', () => {
+       // CORRECTION: Écoute l'événement 'submit' du formulaire au lieu du 'click' du bouton
+      metaForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Empêcher le rechargement de la page
+        
         const studentCode = $('#studentCode').value.trim();
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
@@ -570,7 +574,9 @@
        */
       function getQuestion(profile, topic) {
         try {
-          return CONFIG.QUESTIONS[profile][topic] || CONFIG.QUESTIONS['autre'][topic] || "Question non définie.";
+          // Essayer le profil spécifique, sinon 'autre', sinon message d'erreur
+          const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
+          return profileQuestions[topic] || "Question non définie.";
         } catch (e) {
           console.error(`Erreur getQuestion(${profile}, ${topic})`, e);
           return "Question non disponible.";
@@ -582,14 +588,26 @@
        */
       function renderAllCards() {
         const profile = currentMeta.profile || 'autre';
-        // S'assurer que les questions pour le profil existent, sinon utiliser "autre"
-        const profileQuestions = CONFIG.QUESTIONS[profile] ? CONFIG.QUESTIONS[profile] : CONFIG.QUESTIONS['autre'];
+        const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
+        
+        // Si même 'autre' n'existe pas, on arrête
+        if (!profileQuestions) {
+           console.error("Aucune question définie, même pour le profil 'autre'. Vérifiez APP_CONFIG.QUESTIONS.");
+           topics = [];
+           cardsHelperText.textContent = "Erreur de configuration des questions.";
+           cardsHelperText.classList.remove('hidden');
+           cardsGrid.innerHTML = '';
+           updateProgress(); // Mettre à jour la progression à 0
+           return;
+        }
+
         topics = Object.keys(profileQuestions);
 
         if (topics.length === 0) {
-          cardsHelperText.textContent = "Aucune question n'est configurée.";
+          cardsHelperText.textContent = "Aucune question n'est configurée pour ce profil.";
           cardsHelperText.classList.remove('hidden');
           cardsGrid.innerHTML = '';
+          updateProgress(); // Mettre à jour la progression à 0
           return;
         }
 
@@ -604,13 +622,14 @@
           const card = document.createElement('button');
           card.type = 'button';
           card.dataset.topic = topic;
+          // Style conditionnel pour l'opacité si la carte est faite
           card.className = `glass-bubble w-full text-left rounded-xl p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
           
           card.innerHTML = `
             <div class="flex items-center justify-between">
               <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
                 <img src="${CONFIG.BRAND.MARK_URL}" alt="" class="h-5 w-5">
-                ${topic.charAt(0).toUpperCase() + topic.slice(1)}
+                ${topic.charAt(0).toUpperCase() + topic.slice(1)} 
               </span>
               ${done
                 ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`
@@ -618,6 +637,7 @@
               }
             </div>
             <p class="text-sm text-gray-800">${questionText}</p>
+            ${done && entry.at ? `<p class="text-xs text-gray-500 pt-2">Répondu le ${new Date(entry.at).toLocaleDateString()}</p>` : ''}
           `;
           
           card.addEventListener('click', () => openModal(topic, card));
@@ -648,26 +668,28 @@
        * Anime un compteur de nombre.
        */
       function animateCounter(el, from, to, suffix = '') {
+        if (!el) return; // Sécurité si l'élément n'existe pas
         if (from === to) {
           el.textContent = `${to}${suffix}`;
           return;
         }
-        const duration = 400;
-        const frameRate = 1000 / 60;
+        const duration = 400; // ms
+        const frameRate = 1000 / 60; // 60 fps
         const totalFrames = Math.round(duration / frameRate);
         const diff = to - from;
         let frame = 0;
 
         const counter = setInterval(() => {
           frame++;
-          const progress = (frame / totalFrames);
+          // Utiliser une fonction d'easing (ex: easeOutQuad) pour un effet plus doux
+          const progress = 1 - Math.pow(1 - (frame / totalFrames), 2); 
           const currentVal = from + (diff * progress);
           
           el.textContent = `${Math.round(currentVal)}${suffix}`;
 
-          if (frame === totalFrames) {
+          if (frame >= totalFrames) {
             clearInterval(counter);
-            el.textContent = `${to}${suffix}`;
+            el.textContent = `${to}${suffix}`; // Assurer la valeur finale exacte
           }
         }, frameRate);
       }
@@ -703,9 +725,10 @@
           toast('Un envoi est déjà en cours...', 'warn');
           return;
         }
-        if (!currentMeta.consent || !currentMeta.studentCode) {
-           toast('Veuillez d'abord valider votre profil.', 'warn');
-           profileModal.classList.remove('hidden');
+        // Vérifier si le profil est bien chargé (sécurité supplémentaire)
+        if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
+           toast('Veuillez d\'abord valider votre profil.', 'warn');
+           profileModal.classList.remove('hidden'); // Rouvrir la modale si besoin
            return;
         }
         
@@ -718,34 +741,52 @@
         resetRecording(true); // Réinitialiser l'état d'enregistrement
         
         recordModal.classList.remove('hidden');
-        btnRecord.focus();
+        btnRecord.focus(); // Mettre le focus sur le bouton d'enregistrement
       }
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
+        // Demander confirmation si un enregistrement est en cours
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-          const userConfirmed = confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?");
-          if (!userConfirmed) {
+           // Remplacer confirm() par une modale custom si possible dans le futur
+           // Pour l'instant, confirm() est un compromis simple.
+          if (!confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?")) {
             return; // L'utilisateur a annulé, on ne ferme pas la modale
           }
         }
+        // Arrêter l'enregistrement et les flux s'ils sont actifs
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
         mediaStream?.getTracks().forEach(track => track.stop());
-        recordModal.classList.add('hidden');
+        
+        recordModal.classList.add('hidden'); // Cacher la modale
+        
+        // Renvoyer le focus à l'élément qui a ouvert la modale
         if (lastTrigger) {
           lastTrigger.focus();
         }
       }
       modalClose.addEventListener('click', closeModal);
+      // Fermer aussi si on clique en dehors de la modale
+      recordModal.addEventListener('click', (e) => {
+        if (e.target === recordModal) {
+            closeModal();
+        }
+      });
+      // Fermer avec la touche Echap
+      document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !recordModal.classList.contains('hidden')) {
+              closeModal();
+          }
+      });
       
       /** Met à jour le texte de statut */
       function setStatus(t) { statusEl.textContent = t; }
       
       /** Formate les secondes en MM:SS */
       function hhmmss(s) {
-        const sec = Math.floor(s);
+        const sec = Math.max(0, Math.floor(s)); // Assurer que le temps n'est pas négatif
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       }
       
@@ -758,36 +799,49 @@
 
       /** Réinitialise l'interface d'enregistrement */
       function resetRecording(inModal = false) {
-        mediaRecorder?.stream?.getTracks().forEach(t => t.stop());
-        audioContext?.close();
+        // Arrêter les flux et le contexte audio proprement
+        mediaStream?.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          // Éviter d'appeler stop() si déjà arrêté, peut causer des erreurs
+          try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant du recorder"); }
+        }
+        mediaRecorder = null;
+        audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
+        audioContext = null;
         
         clearInterval(timerInterval);
+        timerInterval = null;
+        
         audioChunks = [];
         audioBlob = null;
         audioTranscription = "";
-        if (audioUrl) URL.revokeObjectURL(audioUrl);
-        audioUrl = null;
+        if (audioUrl) {
+           URL.revokeObjectURL(audioUrl); // Libérer la mémoire
+           audioUrl = null;
+        }
         
         startedAt = 0;
         pausedAt = 0;
         totalPausedTime = 0;
         
         if (inModal) {
-          previewWrap.classList.add('hidden');
-          transcriptionWrap.classList.add('hidden');
-          transcriptionText.textContent = "Génération de la transcription...";
-          timerEl.textContent = '00:00';
-          meterBar.style.width = '0%';
+          previewWrap.classList.add('hidden'); // Cacher la prévisualisation
+          transcriptionWrap.classList.add('hidden'); // Cacher la transcription
+          transcriptionText.textContent = "Génération de la transcription..."; // Texte par défaut
+          timerEl.textContent = '00:00'; // Remettre le timer à zéro
+          meterBar.style.width = '0%'; // Remettre le vumètre à zéro
           
+          // Afficher le bouton Enregistrer, cacher Pause/Reprendre
           btnRecord.classList.remove('hidden');
           btnPause.classList.add('hidden');
           btnResume.classList.add('hidden');
-          btnStop.disabled = true;
+          btnStop.disabled = true; // Désactiver Stop
           
-          btnRecord.disabled = false;
+          btnRecord.disabled = false; // Activer Enregistrer
           
-          setStatus('Prêt');
-          updateSendState();
+          setStatus('Prêt'); // Mettre le statut à "Prêt"
+          updateSendState(); // Mettre à jour l'état du bouton Envoyer
         }
       }
 
@@ -797,113 +851,178 @@
       btnPause.addEventListener('click', pauseRecording);
       btnResume.addEventListener('click', resumeRecording);
       btnStop.addEventListener('click', stopRecording);
-      btnReRecord.addEventListener('click', () => resetRecording(true));
+      btnReRecord.addEventListener('click', () => {
+         // Demander confirmation avant de réenregistrer si un audio existe déjà
+         if (audioBlob) {
+             if (!confirm("Voulez-vous vraiment effacer l'enregistrement actuel pour en faire un nouveau ?")) {
+                 return;
+             }
+         }
+         resetRecording(true); // Réinitialiser pour un nouvel enregistrement
+      });
 
       /** Démarre l'enregistrement */
       async function startRecording() {
-        resetRecording(true);
+        resetRecording(true); // Assure un état propre avant de démarrer
         try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Demander accès au micro
+          mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              // Options pour améliorer la qualité si supporté (optionnel)
+              noiseSuppression: true,
+              echoCancellation: true
+            } 
+          });
         } catch (err) {
-          console.error(err);
-          toast('Erreur : Micro refusé ou non trouvé.', 'err');
-          setStatus('Micro refusé');
+          console.error("Erreur getUserMedia:", err);
+          let errorMsg = 'Erreur : Micro refusé ou non trouvé.';
+          if (err.name === 'NotAllowedError') {
+            errorMsg = 'Vous devez autoriser l\'accès au microphone dans votre navigateur.';
+          } else if (err.name === 'NotFoundError') {
+             errorMsg = 'Aucun microphone n\'a été trouvé sur votre appareil.';
+          }
+          toast(errorMsg, 'err');
+          setStatus('Erreur micro');
           return;
         }
 
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        audioContext.createMediaStreamSource(mediaStream).connect(analyser);
+        try {
+          // Initialiser le contexte audio pour le vumètre
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256; // Précision du vumètre
+          dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const source = audioContext.createMediaStreamSource(mediaStream);
+          source.connect(analyser); // Connecter le micro à l'analyseur
 
-        const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-        mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm';
-        
-        mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
-        mediaRecorder.ondataavailable = e => {
-          if (e.data && e.data.size > 0) audioChunks.push(e.data);
-        };
+          // Choisir le meilleur format d'enregistrement supporté
+          const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+          mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm'; // Fallback
+          
+          mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
 
-        mediaRecorder.onstart = () => {
-          startedAt = Date.now();
-          totalPausedTime = 0;
-          setStatus('Enregistrement en cours…');
-          toast('Enregistrement démarré...');
-          
-          btnRecord.classList.add('hidden');
-          btnPause.classList.remove('hidden');
-          btnResume.classList.add('hidden');
-          btnStop.disabled = false;
-          
-          timerInterval = setInterval(() => {
-            const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
-            const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
-            timerEl.textContent = hhmmss(sec);
+          // Stocker les données audio au fur et à mesure
+          mediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          // Actions au démarrage
+          mediaRecorder.onstart = () => {
+            startedAt = Date.now();
+            totalPausedTime = 0;
+            setStatus('Enregistrement en cours…');
+            toast('Enregistrement démarré...');
             
-            if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
-              stopRecording();
-              toast('Temps maximum (2 min) atteint.', 'warn');
+            // Mise à jour de l'UI des boutons
+            btnRecord.classList.add('hidden');
+            btnPause.classList.remove('hidden');
+            btnResume.classList.add('hidden');
+            btnStop.disabled = false; // Activer Stop
+            
+            // Démarrer le timer et le vumètre
+            if (timerInterval) clearInterval(timerInterval); // Sécurité
+            timerInterval = setInterval(() => {
+              // Calculer le temps écoulé en tenant compte des pauses
+              const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
+              const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
+              timerEl.textContent = hhmmss(sec); // Mettre à jour l'affichage du timer
+              
+              // Arrêt automatique si le temps max est atteint
+              if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
+                stopRecording();
+                toast(`Temps maximum (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
+              }
+              
+              // Mettre à jour le vumètre
+              if (analyser && dataArray) {
+                analyser.getByteTimeDomainData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                  const v = (dataArray[i] - 128) / 128; // Normaliser entre -1 et 1
+                  sum += v * v; // Somme des carrés
+                }
+                const rms = Math.sqrt(sum / dataArray.length); // Root Mean Square (volume)
+                // Ajuster le multiplicateur pour une meilleure visualisation
+                meterBar.style.width = Math.min(100, Math.floor(rms * 200)) + "%"; 
+              }
+            }, 80); // Rafraîchir toutes les 80ms
+          };
+          
+          // Actions à l'arrêt de l'enregistrement
+          mediaRecorder.onstop = () => {
+            clearInterval(timerInterval); // Arrêter le timer/vumètre
+            timerInterval = null;
+            meterBar.style.width = '0%'; // Remettre le vumètre à zéro
+            
+            // Créer le fichier audio final (Blob)
+            audioBlob = new Blob(audioChunks, { type: mimeType });
+            
+            // Vérifier la taille du fichier
+            if (audioBlob.size > CONFIG.LIMITS.MAX_BYTES) {
+              toast(`Fichier trop volumineux (> ${Math.round(CONFIG.LIMITS.MAX_BYTES / 1024 / 1024)} Mo). Veuillez réenregistrer.`, 'err');
+              resetRecording(true); // Réinitialiser
+              return;
             }
             
-            analyser.getByteTimeDomainData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              const v = (dataArray[i] - 128) / 128;
-              sum += v * v;
+            // Vérifier la durée minimale (ex: 1 seconde = ~1000 bytes)
+            if (audioBlob.size < 1000) {
+               toast('Enregistrement trop court. Veuillez parler plus longtemps.', 'warn');
+               resetRecording(true); // Réinitialiser
+               return;
             }
-            const rms = Math.sqrt(sum / dataArray.length);
-            meterBar.style.width = Math.min(100, Math.floor(rms * 180)) + "%";
-          }, 80);
-        };
-        
-        mediaRecorder.onstop = () => {
-          clearInterval(timerInterval);
-          meterBar.style.width = '0%';
-          
-          audioBlob = new Blob(audioChunks, { type: mimeType });
-          
-          if (audioBlob.size > CONFIG.LIMITS.MAX_BYTES) {
-            toast(`Fichier trop volumineux (> ${CONFIG.LIMITS.MAX_BYTES / 1024 / 1024} Mo).`, 'err');
-            resetRecording(true);
-            return;
-          }
-          
-          if (audioBlob.size < 1000) {
-             toast('Enregistrement trop court.', 'warn');
-             resetRecording(true);
-             return;
-          }
 
-          audioUrl = URL.createObjectURL(audioBlob);
-          player.src = audioUrl;
-          previewWrap.classList.remove('hidden');
-          transcriptionWrap.classList.remove('hidden');
-          fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
+            // Afficher la prévisualisation
+            audioUrl = URL.createObjectURL(audioBlob);
+            player.src = audioUrl;
+            previewWrap.classList.remove('hidden'); // Afficher la zone de prévisualisation
+            transcriptionWrap.classList.remove('hidden'); // Afficher la zone de transcription
+            fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
+            
+            setStatus('Transcription en cours...');
+            btnRecord.disabled = true; // Désactiver Enregistrer pendant la transcription
+            btnStop.disabled = true;  // Stop est déjà désactivé mais pour être sûr
+            
+            // Démarrer la transcription (appel asynchrone)
+            transcribeAudio(audioBlob); 
+            
+            updateSendState(); // Mettre à jour l'état du bouton Envoyer (sera désactivé car sending=false)
+            
+            // Arrêter les flux et le contexte audio proprement
+            mediaStream?.getTracks().forEach(t => t.stop());
+            mediaStream = null;
+            audioContext?.close().catch(e => console.warn("Erreur fermeture tardive AudioContext"));
+            audioContext = null;
+          };
+
+          // Gérer les erreurs potentielles du MediaRecorder
+          mediaRecorder.onerror = (event) => {
+              console.error(`Erreur MediaRecorder: ${event.error.name}`, event.error);
+              toast(`Erreur d'enregistrement: ${event.error.message}`, 'err');
+              setStatus('Erreur enregistrement');
+              resetRecording(true);
+          };
           
-          setStatus('Transcription en cours...');
-          btnRecord.disabled = true;
-          btnStop.disabled = true;
-          
-          // Démarrer la transcription
-          transcribeAudio(audioBlob);
-          
-          updateSendState();
-          mediaStream.getTracks().forEach(t => t.stop());
-          audioContext?.close();
-        };
-        
-        mediaRecorder.start();
+          // Démarrer l'enregistrement (déclenche onstart)
+          mediaRecorder.start();
+
+        } catch (err) {
+            console.error("Erreur lors de l'initialisation de l'enregistrement:", err);
+            toast("Impossible de démarrer l'enregistrement.", 'err');
+            setStatus('Erreur init');
+            resetRecording(true); // Nettoyer en cas d'erreur
+        }
       }
       
       /** Met l'enregistrement en pause */
       function pauseRecording() {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
-          mediaRecorder.pause();
-          pausedAt = Date.now();
-          clearInterval(timerInterval);
+          mediaRecorder.pause(); // Mettre en pause l'enregistreur
+          pausedAt = Date.now(); // Noter l'heure de la pause
+          clearInterval(timerInterval); // Arrêter le timer/vumètre
+          timerInterval = null;
           setStatus('En pause');
           
+          // Mettre à jour l'UI des boutons
           btnPause.classList.add('hidden');
           btnResume.classList.remove('hidden');
         }
@@ -912,39 +1031,48 @@
       /** Reprend l'enregistrement */
       function resumeRecording() {
         if (mediaRecorder && mediaRecorder.state === 'paused') {
-          mediaRecorder.resume();
-          totalPausedTime += (Date.now() - pausedAt);
+          mediaRecorder.resume(); // Reprendre l'enregistrement
+          // Ajouter le temps passé en pause au total des pauses
+          totalPausedTime += (Date.now() - pausedAt); 
+          pausedAt = 0; // Réinitialiser l'heure de pause
           setStatus('Enregistrement en cours…');
           
+          // Mettre à jour l'UI des boutons
           btnPause.classList.remove('hidden');
           btnResume.classList.add('hidden');
           
-          // Relancer l'intervalle du timer/vumètre
+          // Relancer l'intervalle du timer/vumètre (copié de onstart)
+          if (timerInterval) clearInterval(timerInterval);
           timerInterval = setInterval(() => {
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
             const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
             timerEl.textContent = hhmmss(sec);
             if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
-            analyser.getByteTimeDomainData(dataArray);
-            let sum = 0;
-            for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
-            const rms=Math.sqrt(sum/dataArray.length);
-            meterBar.style.width=Math.min(100,Math.floor(rms*180))+"%";
+            if (analyser && dataArray) {
+              analyser.getByteTimeDomainData(dataArray);
+              let sum = 0;
+              for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
+              const rms=Math.sqrt(sum/dataArray.length);
+              meterBar.style.width=Math.min(100,Math.floor(rms*200))+"%";
+            }
           }, 80);
         }
       }
       
       /** Arrête l'enregistrement */
       function stopRecording() {
+        // N'arrêter que si l'enregistrement est actif ou en pause
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-          mediaRecorder.stop();
+          mediaRecorder.stop(); // Déclenche l'événement 'onstop'
           toast('Enregistrement arrêté.');
           
-          btnRecord.classList.remove('hidden');
-          btnPause.classList.add('hidden');
-          btnResume.classList.add('hidden');
-          btnStop.disabled = true;
-          btnRecord.disabled = false;
+          // Remettre l'UI dans l'état initial (pré-enregistrement)
+          // Note: l'événement 'onstop' gérera l'affichage de la prévisualisation
+          btnRecord.classList.remove('hidden'); // Afficher Enregistrer
+          btnPause.classList.add('hidden');    // Cacher Pause
+          btnResume.classList.add('hidden');   // Cacher Reprendre
+          btnStop.disabled = true;             // Désactiver Stop
+          btnRecord.disabled = false;          // Réactiver Enregistrer (sera désactivé pendant la transcription)
         }
       }
 
@@ -959,25 +1087,42 @@
        * @returns {Promise<object>} - La réponse JSON
        */
       async function fetchGAS(url, payload) {
-        // CORRECTION "Failed to Fetch" (CORS)
-        // On envoie en 'text/plain' pour éviter la pré-vérification OPTIONS
-        // que Google Apps Script gère mal.
-        const response = await fetch(url, {
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'omit',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8', 
-          },
-          body: JSON.stringify(payload), // Le corps est du JSON, mais l'en-tête dit text/plain
-          redirect: 'follow'
-        });
+        try {
+          // CORRECTION "Failed to Fetch" (CORS)
+          // On envoie en 'text/plain' pour éviter la pré-vérification OPTIONS
+          const response = await fetch(url, {
+            method: 'POST',
+            mode: 'cors', // Important pour les requêtes cross-origin
+            credentials: 'omit', // Ne pas envoyer de cookies
+            headers: {
+              // L'astuce CORS: prétendre envoyer du texte simple
+              'Content-Type': 'text/plain;charset=utf-8', 
+            },
+            body: JSON.stringify(payload), // Le corps est bien du JSON
+            redirect: 'follow' // Suivre les redirections si GAS en fait
+          });
 
-        if (!response.ok) {
-          throw new Error(`Erreur réseau : ${response.statusText} (${response.status})`);
+          if (!response.ok) {
+            // Essayer de lire le message d'erreur du backend si possible
+            let errorText = `Erreur réseau : ${response.statusText} (${response.status})`;
+            try {
+              const errorJson = await response.json();
+              if (errorJson && errorJson.error) {
+                 errorText = `Erreur backend : ${errorJson.error}`;
+              }
+            } catch(e) { /* Ignorer si la réponse n'est pas du JSON */ }
+            throw new Error(errorText);
+          }
+          
+          // Analyser la réponse JSON du backend
+          const jsonResponse = await response.json();
+          return jsonResponse; 
+
+        } catch (err) {
+           console.error("Erreur fetchGAS:", err);
+           // Renvoyer une erreur plus générique au lieu de l'erreur brute
+           throw new Error("La communication avec le serveur a échoué."); 
         }
-        
-        return response.json(); // GAS répondra avec du JSON
       }
 
       /**
@@ -989,13 +1134,20 @@
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            const base64data = reader.result;
-            // Enlever le préfixe 'data:audio/webm;base64,'
-            const base64 = base64data.split(',')[1];
-            resolve(base64);
+            try {
+              const base64data = reader.result;
+              // Extraire seulement la partie base64 après la virgule
+              const base64 = base64data.split(',')[1];
+              if (!base64) {
+                 throw new Error("Conversion Base64 invalide.");
+              }
+              resolve(base64);
+            } catch (err) {
+               reject(err);
+            }
           };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+          reader.onerror = (error) => reject(error); // Gérer les erreurs de lecture
+          reader.readAsDataURL(blob); // Lire le blob comme une URL de données
         });
       }
 
@@ -1004,114 +1156,137 @@
        * @param {Blob} audioBlob - Le fichier audio.
        */
       async function transcribeAudio(audioBlob) {
+        // Vérifier si l'URL du backend est configurée
         if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Backend (WEBAPP_URL) non configuré.', 'err');
+          toast('Erreur: Le backend n\'est pas configuré (WEBAPP_URL).', 'err');
           setStatus('Erreur config');
+          transcriptionText.textContent = "[Erreur de configuration backend]";
+          // Permettre quand même l'envoi si la transcription échoue ? Oui.
+          btnRecord.disabled = false; 
+          updateSendState();
           return;
         }
         
         try {
-          setStatus('Conversion...');
-          const fileBase64 = await blobToBase64(audioBlob);
-          setStatus('Transcription...');
+          setStatus('Conversion audio...');
+          const fileBase64 = await blobToBase64(audioBlob); // Convertir l'audio
+          setStatus('Transcription en cours...');
           
           const payload = {
-            action: "transcribe",
-            mimeType: mimeType,
-            fileBase64: fileBase64
+            action: "transcribe", // Action pour le backend
+            mimeType: mimeType, // Type de fichier audio
+            fileBase64: fileBase64 // Audio en base64
           };
 
+          // Appeler le backend via notre fonction fetchGAS sécurisée
           const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
-          if (json.ok === false || !json.transcription) {
-            throw new Error(json.error || 'Transcription vide reçue.');
+          // Vérifier la réponse du backend
+          if (json.ok === false || typeof json.transcription !== 'string') {
+            throw new Error(json.error || 'Réponse de transcription invalide reçue.');
           }
 
-          audioTranscription = json.transcription; // Stocker la transcription
-          transcriptionText.textContent = json.transcription;
+          audioTranscription = json.transcription || "[Transcription vide]"; // Stocker la transcription
+          transcriptionText.textContent = audioTranscription; // Afficher
           setStatus('Prêt à l’envoi');
           toast('Transcription réussie.', 'ok');
 
         } catch (err) {
           console.error('Erreur de transcription:', err);
-          toast(`La transcription a échoué.`, 'err');
+          // Afficher un message d'erreur plus utile à l'utilisateur
+          toast(`La transcription a échoué (${err.message}). Vous pouvez quand même envoyer.`, 'err');
           setStatus('Erreur transcription');
           transcriptionText.textContent = `[Échec de la transcription. Vous pouvez quand même envoyer l'audio.]`;
           audioTranscription = "[TRANSCRIPTION_FAILED]"; // Marqueur d'échec
         } finally {
+          // Réactiver les boutons même si la transcription échoue
           btnRecord.disabled = false;
-          btnStop.disabled = true;
-          updateSendState(); // Activer le bouton d'envoi même si la transcription échoue
+          btnStop.disabled = true; // Stop reste désactivé après l'arrêt
+          updateSendState(); // Mettre à jour l'état du bouton Envoyer
         }
       }
       
+      // Attacher la fonction d'envoi au clic du bouton Envoyer
       btnSend.addEventListener('click', submitOne);
 
       /**
        * Envoie la réponse finale (audio + métadonnées + transcription).
        */
       async function submitOne() {
-        if (sending || !audioBlob) return;
+        // Empêcher les envois multiples ou si pas d'audio
+        if (sending || !audioBlob) return; 
         
+        // Vérifier à nouveau la configuration du backend
         if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Backend (WEBAPP_URL) non configuré.', 'err');
+          toast('Erreur: Le backend n\'est pas configuré (WEBAPP_URL).', 'err');
           return;
         }
 
-        sending = true;
+        sending = true; // Marquer comme "envoi en cours"
         setStatus('Envoi en cours…');
-        updateSendState();
+        updateSendState(); // Désactiver le bouton Envoyer
         toast('Envoi de votre réponse...');
         
         try {
+          // Convertir l'audio en base64 (peut prendre un peu de temps)
+          setStatus('Préparation de l\'envoi...');
           const fileBase64 = await blobToBase64(audioBlob);
+          
+          // Récupérer la durée finale
           const [mm, ss] = timerEl.textContent.split(':').map(Number);
           const durationSec = (mm * 60 + ss) || 0;
 
+          // Préparer le payload complet pour le backend
           const payload = {
-            action: "uploadAudio",
-            ...currentMeta, // studentCode, cohort, profile, used, consent
-            topic: currentTopic,
-            durationSec: durationSec,
-            mimeType: mimeType,
-            transcription: audioTranscription, // Envoyer la transcription
-            fileBase64: fileBase64,
-            clientUA: navigator.userAgent
+            action: "uploadAudio", // Action pour le backend
+            ...currentMeta, // Inclure studentCode, cohort, profile, used, consent
+            topic: currentTopic, // Le sujet de la question
+            durationSec: durationSec, // Durée de l'audio
+            mimeType: mimeType, // Type de fichier audio
+            transcription: audioTranscription, // Transcription (ou marqueur d'échec)
+            fileBase64: fileBase64, // L'audio lui-même
+            clientUA: navigator.userAgent // Info sur le navigateur (optionnel)
           };
 
+          setStatus('Envoi des données...');
+          // Envoyer au backend
           const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
+          // Vérifier la réponse du backend
           if (json.ok === false) {
-            throw new Error(json.error || 'Erreur inconnue du backend.');
+            throw new Error(json.error || 'Erreur inconnue lors de l\'enregistrement.');
           }
 
           setStatus('Terminé ✅');
           toast('Réponse envoyée avec succès !', 'ok');
           
-          // Mettre à jour le statut local
+          // Mettre à jour le statut localement pour marquer comme "fait"
           currentStatus[currentTopic] = {
             done: true,
-            at: new Date().toISOString(),
-            durationSec: durationSec
+            at: new Date().toISOString(), // Date de l'envoi
+            durationSec: durationSec // Stocker la durée
           };
-          saveStatus(currentMeta.studentCode, currentStatus);
+          saveStatus(currentMeta.studentCode, currentStatus); // Sauvegarder dans localStorage
           
-          renderAllCards(); // Mettre à jour la carte
-          closeModal();
+          renderAllCards(); // Mettre à jour l'affichage de la carte
+          closeModal(); // Fermer la modale d'enregistrement
 
         } catch (err) {
-          console.error('Erreur d\'envoi:', err);
-          toast(`Erreur d’envoi : ${err.message}`, 'err');
+          console.error('Erreur d\'envoi final:', err);
+          // Afficher un message d'erreur clair
+          toast(`Erreur d’envoi : ${err.message}. Veuillez réessayer.`, 'err');
           setStatus('Erreur d’envoi');
         } finally {
-          sending = false;
-          updateSendState();
+          sending = false; // Marquer comme "envoi terminé"
+          updateSendState(); // Réactiver le bouton Envoyer si besoin
         }
       }
 
       // --- Démarrage ---
-      initProfile();
-    });
+      // Lancer l'initialisation du profil au chargement de la page
+      initProfile(); 
+      
+    }); // Fin de DOMContentLoaded
   </script>
 </body>
 </html>
