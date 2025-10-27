@@ -519,43 +519,72 @@
        * Gère la soumission du formulaire de profil.
        */
       // CORRECTION : Rétablissement du 'submit' listener qui avait disparu
-      metaForm.addEventListener('submit', (e) => {
-        e.preventDefault(); // Empêcher le rechargement de la page
-        
-        const studentCode = $('#studentCode').value.trim();
-        const cohort = $('#cohort').value.trim();
-        const consent = $('#consent').checked;
+let isSubmittingProfile = false; // AJOUT : Flag de protection
 
-        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
-          toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-          return;
-        }
-        if (cohort.length < 1) {
-          toast('Veuillez renseigner votre contexte.', 'warn');
-          return;
-        }
-        if (!consent) {
-          toast('Le consentement est requis pour continuer.', 'warn');
-          return;
-        }
+metaForm.addEventListener('submit', (e) => {
+  e.preventDefault(); // Empêcher le rechargement de la page
+  e.stopPropagation(); // AJOUT : Bloquer la propagation
+  
+  // AJOUT : Empêcher les soumissions multiples
+  if (isSubmittingProfile) {
+    console.log('Soumission déjà en cours, ignorée');
+    return false;
+  }
+  
+  isSubmittingProfile = true;
+  saveProfileBtn.disabled = true; // AJOUT : Désactiver le bouton
+  
+  const studentCode = $('#studentCode').value.trim();
+  const cohort = $('#cohort').value.trim();
+  const consent = $('#consent').checked;
 
-        currentMeta = {
-          studentCode: studentCode,
-          cohort: cohort,
-          profile: $('#profile').value,
-          used: $('#used').value,
-          consent: true
-        };
-        
-        saveMeta(currentMeta);
-        currentStatus = loadStatus(currentMeta.studentCode); // Charger le statut du nouvel utilisateur
-        renderAllCards();
-        
-        profileModal.classList.add('hidden');
-        mainContent.classList.remove('opacity-0');
-        editProfileBtn.classList.remove('hidden');
-        toast('Profil enregistré !', 'ok');
-      });
+  if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
+    toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
+    isSubmittingProfile = false; // AJOUT : Réinitialiser
+    saveProfileBtn.disabled = false; // AJOUT : Réactiver
+    return false; // MODIFIÉ : return false au lieu de return
+  }
+  if (cohort.length < 1) {
+    toast('Veuillez renseigner votre contexte.', 'warn');
+    isSubmittingProfile = false; // AJOUT
+    saveProfileBtn.disabled = false; // AJOUT
+    return false; // MODIFIÉ
+  }
+  if (!consent) {
+    toast('Le consentement est requis pour continuer.', 'warn');
+    isSubmittingProfile = false; // AJOUT
+    saveProfileBtn.disabled = false; // AJOUT
+    return false; // MODIFIÉ
+  }
+
+  currentMeta = {
+    studentCode: studentCode,
+    cohort: cohort,
+    profile: $('#profile').value,
+    used: $('#used').value,
+    consent: true
+  };
+  
+  saveMeta(currentMeta);
+  currentStatus = loadStatus(currentMeta.studentCode);
+  
+  // MODIFIÉ : Fermer AVANT de rendre les cartes
+  profileModal.classList.add('hidden');
+  
+  // AJOUT : Délai pour éviter les conflits
+  setTimeout(() => {
+    renderAllCards();
+    mainContent.classList.remove('opacity-0');
+    editProfileBtn.classList.remove('hidden');
+    toast('Profil enregistré !', 'ok');
+    
+    // AJOUT : Réinitialiser le flag
+    isSubmittingProfile = false;
+    saveProfileBtn.disabled = false;
+  }, 150);
+  
+  return false; // AJOUT : Bloquer totalement la soumission
+});
 
       // Bouton pour rouvrir la modale de profil
       editProfileBtn.addEventListener('click', () => {
