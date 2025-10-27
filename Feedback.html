@@ -14,79 +14,29 @@
      */
     window.APP_CONFIG = {
       // --- Backend URL ---
-      // L'URL de votre script Google Apps Script (obtenue après le déploiement).
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbzzdlfCuqikvYDSUlwsKvIrUL59pCWoxETr-jKM4_GmQj2I4rdscHgevJQgBM2NqA/exec",
 
       // --- Branding ---
-      // Utilisez des chemins relatifs (ex: ./assets/logo.png) si les images sont
-      // dans le même dépôt, ou des URLs complètes (https://...) si elles sont hébergées ailleurs.
       BRAND: {
-        TITLE: "Feedback CHOPS", // <--- C'est bien ce titre qui sera utilisé
-        LOGO_URL: "./CHOPStandard.svg", // Image pour l'en-tête
-        MARK_URL: "./CHOPiBasic.svg", // Icône pour les cartes
-        FAVICON_URL: "./CHOPiBasic.svg" // Icône pour l'onglet
+        TITLE: "Feedback CHOPS",
+        LOGO_URL: "./CHOPStandard.svg",
+        MARK_URL: "./CHOPiBasic.svg",
+        FAVICON_URL: "./CHOPiBasic.svg"
       },
 
       // --- Limites d'enregistrement ---
       LIMITS: {
-        MAX_SECONDS: 120, // Durée maximale en secondes (120s = 2 minutes)
+        MAX_SECONDS: 120, // 2 minutes
         MAX_BYTES: 10 * 1024 * 1024, // 10MB
       },
 
-      // --- Questions par Profil ---
-      // C'est ici que vous définissez les questions.
-      // Chaque clé (ex: "declic") doit exister pour CHAQUE profil.
+      // --- Questions (Inchangé) ---
       QUESTIONS: {
-        // Profil: etudiant
-        etudiant: {
-          declic: "En tant qu'étudiant, quel a été le 'déclic' ou le moment 'aha' où vous avez saisi l'utilité de CHOPS ?",
-          usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi pour un projet académique ou personnel ?",
-          clarte: "Qu'est-ce qui a le plus clarifié votre compréhension du framework ? (ex: un cours, un exemple, CHOPi...)",
-          equipe: "Si vous l'avez utilisé en groupe, comment CHOPS a-t-il structuré vos échanges ou votre travail d'équipe ?",
-          CHOPi: "Dans votre parcours d'apprentissage, qu'est-ce qui vous a plu ou manqué dans l'outil CHOPi ?",
-          reutilisation: "Pensez-vous réutiliser CHOPS à l'avenir ? Si oui, dans quel type de projet ou de contexte ?",
-          libre: "Vous avez la parole : quel est le retour le plus important que vous aimeriez nous donner ?"
-        },
-        // Profil: entrepreneur
-        entrepreneur: {
-          declic: "En tant qu'entrepreneur, quel problème concret pensiez-vous résoudre ou quel 'déclic' avez-vous eu avec CHOPS ?",
-          usage: "Comment avez-vous appliqué CHOPS ou CHOPi sur un de vos projets ou 'use case' d'entreprise ?",
-          clarte: "Qu'est-ce qui, dans le framework, a le plus aidé à clarifier votre vision stratégique ou celle de vos équipes ?",
-          equipe: "Comment vos équipes (ou vous-même) ont-elles interagi avec la méthode ? Quels ont été les points de friction ou de fluidité ?",
-          CHOPi: "En tant que décideur, qu'avez-vous pensé de l'outil CHOPi ? Qu'est-ce qui lui manque pour être un outil pro ?",
-          reutilisation: "Voyez-vous un potentiel de réutilisation de CHOPS pour d'autres 'use cases' dans votre organisation ?",
-          libre: "Vous avez la parole : quel est le retour leF plus stratégique que vous aimeriez nous donner ?"
-        },
-        // Profil: freelance
-        freelance: {
-          declic: "En tant que freelance, quel a été le 'déclic' où vous vous êtes dit 'tiens, CHOPS pourrait m'aider avec mes clients' ?",
-          usage: "Avez-vous pu utiliser CHOPS ou CHOPi (même mentalement) pour cadrer la mission d'un client ou un projet personnel ?",
-          clarte: "Quelle partie du framework vous semble la plus utile pour structurer et vendre vos prestations de conseil ou de production ?",
-          equipe: "En travaillant (souvent seul ou en petite équipe), comment CHOPS vous aide-t-il à mieux dialoguer avec vos clients/partenaires ?",
-          CHOPi: "En tant qu'indépendant, que vous a-t-il plu ou manqué dans l'outil CHOPi pour vos propres besoins ?",
-          reutilisation: "Pensez-vous intégrer CHOPS à votre 'stack' d'outils méthodologiques pour vos futures missions ?",
-          libre: "Vous avez la parole : quel est le retour le plus pertinent que vous aimeriez nous donner ?"
-        },
-        // Profil: enseignant
-        enseignant: {
-          declic: "En tant qu'enseignant, quel 'déclic' pédagogique avez-vous eu en découvrant le framework CHOPS ?",
-          usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi dans un de vos cours ou ateliers ?",
-          clarte: "Du point de vue de l'enseignant, qu'est-ce qui vous semble le plus efficace pour transmettre ce framework aux étudiants ?",
-          equipe: "Comment vos étudiants ont-ils réagi à la méthode ? Qu'est-ce qui a bien fonctionné ou non en classe ?",
-          CHOPi: "Qu'avez-vous pensé de l'outil CHOPi comme support pédagogique ? Que lui manque-t-il ?",
-          reutilisation: "Pensez-vous réutiliser CHOPS dans votre programme de cours à l'avenir ? Si oui, comment ?",
-          libre: "Vous avez la parole : quel est le retour pédagogique le plus important que vous aimeriez nous donner ?"
-        },
-        // Profil: autre
-        autre: {
-          declic: "Dans votre contexte particulier, quel a été le 'déclic' ou le moment 'aha' où vous avez saisi l'utilité de CHOPS ?",
-          usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi dans votre projet ?",
-          clarte: "Qu'est-ce qui a le plus clarifié votre compréhension du framework ?",
-          equipe: "Si vous l'avez utilisé en groupe, comment CHOPS a-t-il structuré vos échanges ou votre travail ?",
-          CHOPi: "Dans votre situation, qu'est-ce qui vous a plu ou manqué dans l'outil CHOPi ?",
-          reutilisation: "Pensez-vous réutiliser CHOPS à l'avenir ? Si oui, dans quel type de projet ou de contexte ?",
-          libre: "Vous avez la parole : quel est le retour le plus important que vous aimeriez nous donner ?"
-        }
+        etudiant: { declic: "En tant qu'étudiant, quel a été le 'déclic' ou le moment 'aha' où vous avez saisi l'utilité de CHOPS ?", usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi pour un projet académique ou personnel ?", clarte: "Qu'est-ce qui a le plus clarifié votre compréhension du framework ? (ex: un cours, un exemple, CHOPi...)", equipe: "Si vous l'avez utilisé en groupe, comment CHOPS a-t-il structuré vos échanges ou votre travail d'équipe ?", CHOPi: "Dans votre parcours d'apprentissage, qu'est-ce qui vous a plu ou manqué dans l'outil CHOPi ?", reutilisation: "Pensez-vous réutiliser CHOPS à l'avenir ? Si oui, dans quel type de projet ou de contexte ?", libre: "Vous avez la parole : quel est le retour le plus important que vous aimeriez nous donner ?" },
+        entrepreneur: { declic: "En tant qu'entrepreneur, quel problème concret pensiez-vous résoudre ou quel 'déclic' avez-vous eu avec CHOPS ?", usage: "Comment avez-vous appliqué CHOPS ou CHOPi sur un de vos projets ou 'use case' d'entreprise ?", clarte: "Qu'est-ce qui, dans le framework, a le plus aidé à clarifier votre vision stratégique ou celle de vos équipes ?", equipe: "Comment vos équipes (ou vous-même) ont-elles interagi avec la méthode ? Quels ont été les points de friction ou de fluidité ?", CHOPi: "En tant que décideur, qu'avez-vous pensé de l'outil CHOPi ? Qu'est-ce qui lui manque pour être un outil pro ?", reutilisation: "Voyez-vous un potentiel de réutilisation de CHOPS pour d'autres 'use cases' dans votre organisation ?", libre: "Vous avez la parole : quel est le retour leF plus stratégique que vous aimeriez nous donner ?" },
+        freelance: { declic: "En tant que freelance, quel a été le 'déclic' où vous vous êtes dit 'tiens, CHOPS pourrait m'aider avec mes clients' ?", usage: "Avez-vous pu utiliser CHOPS ou CHOPi (même mentalement) pour cadrer la mission d'un client ou un projet personnel ?", clarte: "Quelle partie du framework vous semble la plus utile pour structurer et vendre vos prestations de conseil ou de production ?", equipe: "En travaillant (souvent seul ou en petite équipe), comment CHOPS vous aide-t-il à mieux dialoguer avec vos clients/partenaires ?", CHOPi: "En tant qu'indépendant, que vous a-t-il plu ou manqué dans l'outil CHOPi pour vos propres besoins ?", reutilisation: "Pensez-vous intégrer CHOPS à votre 'stack' d'outils méthodologiques pour vos futures missions ?", libre: "Vous avez la parole : quel est le retour le plus pertinent que vous aimeriez nous donner ?" },
+        enseignant: { declic: "En tant qu'enseignant, quel 'déclic' pédagogique avez-vous eu en découvrant le framework CHOPS ?", usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi dans un de vos cours ou ateliers ?", clarte: "Du point de vue de l'enseignant, qu'est-ce qui vous semble le plus efficace pour transmettre ce framework aux étudiants ?", equipe: "Comment vos étudiants ont-ils réagi à la méthode ? Qu'est-ce qui a bien fonctionné ou non en classe ?", CHOPi: "Qu'avez-vous pensé de l'outil CHOPi comme support pédagogique ? Que lui manque-t-il ?", reutilisation: "Pensez-vous réutiliser CHOPS dans votre programme de cours à l'avenir ? Si oui, comment ?", libre: "Vous avez la parole : quel est le retour pédagogique le plus important que vous aimeriez nous donner ?" },
+        autre: { declic: "Dans votre contexte particulier, quel a été le 'déclic' ou le moment 'aha' où vous avez saisi l'utilité de CHOPS ?", usage: "Comment avez-vous concrètement utilisé CHOPS ou CHOPi dans votre projet ?", clarte: "Qu'est-ce qui a le plus clarifié votre compréhension du framework ?", equipe: "Si vous l'avez utilisé en groupe, comment CHOPS a-t-il structuré vos échanges ou votre travail ?", CHOPi: "Dans votre situation, qu'est-ce qui vous a plu ou manqué dans l'outil CHOPi ?", reutilisation: "Pensez-vous réutiliser CHOPS à l'avenir ? Si oui, dans quel type de projet ou de contexte ?", libre: "Vous avez la parole : quel est le retour le plus important que vous aimeriez nous donner ?" }
       }
     };
   </script>
@@ -94,7 +44,6 @@
   <!-- ============================= FIN DE LA CONFIGURATION =========================== -->
   <!-- =================================================================================== -->
 
-  <!-- NETTOYAGE: Le titre ici sera écrasé par le script, mais on peut le mettre à jour pour cohérence -->
   <title id="appTitle">Feedback CHOPS</title>
   <meta name="description" content="Mini-Voiceform CHOPS — collecte sécurisée de retours vocaux.">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -155,13 +104,11 @@
       outline: none;
     }
 
-    /* Boutons */
-    .btn { @apply px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2; }
-    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500; }
-    .btn-secondary { @apply bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 focus:ring-indigo-500; }
-    .btn-record { @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500; }
-    .btn-pause { @apply bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500; }
-    .btn-disabled { @apply opacity-50 cursor-not-allowed; }
+    /* CORRECTION BOUTONS: 
+       Suppression des classes .btn et @apply qui ne fonctionnent pas.
+       Les classes Tailwind sont maintenant directement sur les éléments HTML.
+    */
+    .btn-disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Barre de progression flottante */
     #floatingProgress {
@@ -170,6 +117,8 @@
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid var(--card-border);
       transition: opacity 0.3s, transform 0.3s;
+      /* CORRECTION FLOU: z-index plus élevé que la modale */
+      z-index: 60;
     }
 
     /* Barre de progression animée */
@@ -187,9 +136,8 @@
     /* Masqué */
     .hidden { display: none; }
 
-    /* CORRECTION MOBILE: Simplification de la modale */
+    /* CORRECTION MOBILE: (Inchangé) */
     #profileModal {
-        /* Garder l'alignement en haut sur mobile, centré sur desktop */
         align-items: flex-start;
         padding-top: 1rem;
         padding-bottom: 1rem;
@@ -200,8 +148,8 @@
       }
     }
     #profileModal .glass-bubble {
-        overflow-y: auto; /* Permettre le défilement de TOUTE la modale si besoin */
-        max-height: 90vh; /* Limiter la hauteur */
+        overflow-y: auto;
+        max-height: 90vh;
     }
     #profileModal form {
         overflow-y: visible; 
@@ -212,16 +160,20 @@
        padding-top: 1rem; 
        text-align: right;
     }
+    
+    /* CORRECTION FLOU: z-index plus élevé que tout */
+    #toasts {
+      z-index: 70;
+    }
 
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
   
-  <!-- En-tête -->
+  <!-- En-tête (Inchangé) -->
   <header class="max-w-5xl mx-auto px-4 pt-6 pb-3 flex items-center justify-between gap-3">
     <div class="flex items-center gap-3">
       <img id="brandLogo" src="https://placehold.co/120x40/f0f0f0/333?text=Logo" alt="Logo" class="h-10 w-auto">
-      <!-- NETTOYAGE: Le titre H1 sera mis à jour par le script -->
       <h1 id="brandTitle" class="text-xl font-semibold text-gray-800 hidden sm:block"></h1>
     </div>
     <button id="editProfileBtn" class="hidden text-sm font-medium text-indigo-600 hover:text-indigo-800">
@@ -229,19 +181,14 @@
     </button>
   </header>
 
-  <!-- Contenu Principal (Cartes) -->
+  <!-- Contenu Principal (Cartes) (Inchangé) -->
   <main id="mainContent" class="max-w-5xl mx-auto p-4 space-y-6 opacity-0 transition-opacity duration-500">
-    <!-- NETTOYAGE: Suppression du helper text devenu inutile -->
-    <!-- <div id="cardsHelperText" class="text-center text-gray-500 px-4 py-8">
-      <p>Veuillez d'abord renseigner vos informations pour afficher les questions.</p>
-    </div> -->
-    
     <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <!-- Les cartes de questions seront injectées ici par le script -->
     </div>
   </main>
 
-  <!-- Barre de progression flottante -->
+  <!-- Barre de progression flottante (Inchangé) -->
   <div id="floatingProgress" class="fixed bottom-0 left-0 right-0 p-4 shadow-lg">
     <div class="max-w-5xl mx-auto">
       <div class="flex items-center justify-between mb-1">
@@ -254,14 +201,14 @@
     </div>
   </div>
 
-  <!-- Notifications (Toasts) -->
-  <div id="toasts" aria-live="polite" class="fixed top-5 right-5 z-50 w-full max-w-xs space-y-3"></div>
+  <!-- Notifications (Toasts) (Inchangé) -->
+  <div id="toasts" aria-live="polite" class="fixed top-5 right-5 w-full max-w-xs space-y-3"></div>
 
   <!-- =================================================================================== -->
   <!-- ==================================== MODALES ==================================== -->
   <!-- =================================================================================== -->
 
-  <!-- Modale de Profil (Affichée au chargement) -->
+  <!-- Modale de Profil (Inchangé, sauf bouton) -->
   <div id="profileModal" class="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 pt-4 pb-4" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
@@ -270,6 +217,7 @@
       <p class="text-sm text-gray-600 mb-6">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
       
       <form id="metaForm" class="space-y-5" novalidate>
+        <!-- Champs de formulaire (Inchangé) -->
         <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="studentCode" class="block text-sm font-medium">Identifiant</label>
@@ -310,13 +258,17 @@
         </fieldset>
 
         <div class="modal-footer">
-            <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
+            <!-- CORRECTION STYLE BOUTON -->
+            <button id="saveProfileBtn" type="submit" 
+                    class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500">
+              Valider et commencer
+            </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modale d'enregistrement -->
+  <!-- Modale d'enregistrement (Plusieurs corrections ici) -->
   <div id="recordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
@@ -326,42 +278,52 @@
           <p id="modalTheme" class="text-xs uppercase tracking-wide font-semibold text-indigo-700"></p>
           <h3 id="modalTitle" class="text-lg font-semibold text-gray-900"></h3>
         </div>
-        <button id="modalClose" class="btn btn-secondary !p-2 !rounded-full !shadow-none" aria-label="Fermer">
+        <!-- CORRECTION STYLE BOUTON -->
+        <button id="modalClose" 
+                class="p-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 focus:ring-indigo-500 !shadow-none" 
+                aria-label="Fermer">
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
       
       <div class="p-4 sm:p-6 space-y-5">
         <div id="controlsWrap" class="flex flex-col sm:flex-row items-center gap-3">
-          <!-- Boutons Enregistrer / Pause / Reprendre -->
-          <button id="btnRecord" type="button" class="btn btn-record w-full sm:w-auto">
+          <!-- CORRECTION STYLE BOUTON -->
+          <button id="btnRecord" type="button" 
+                  class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 w-full sm:w-auto">
             <span class="flex items-center justify-center gap-2">
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" /><path d="M5.5 8.5a.5.5 0 011 0V10a2 2 0 104 0V8.5a.5.5 0 011 0v1.5a3 3 0 11-6 0V8.5z" /><path d="M9 14a1 1 0 001 1h0a1 1 0 001-1v-1a1 1 0 00-1-1h0a1 1 0 00-1 1v1z" /></svg>
               Enregistrer
             </span>
           </button>
-          <button id="btnPause" type="button" class="btn btn-pause w-full sm:w-auto hidden">
+          <!-- CORRECTION STYLE BOUTON -->
+          <button id="btnPause" type="button" 
+                  class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500 w-full sm:w-auto hidden">
             <span class="flex items-center justify-center gap-2">
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3.5A1.5 1.5 0 017 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5zM12.5 3.5A1.5 1.5 0 0114 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5z" clip-rule="evenodd" /></svg>
               Pause
             </span>
           </button>
-          <button id="btnResume" type="button" class="btn btn-record w-full sm:w-auto hidden">
+          <!-- CORRECTION STYLE BOUTON -->
+          <button id="btnResume" type="button" 
+                  class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 w-full sm:w-auto hidden">
             <span class="flex items-center justify-center gap-2">
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" /><path d="M5.5 8.5a.5.5 0 011 0V10a2 2 0 104 0V8.5a.5.5 0 011 0v1.5a3 3 0 11-6 0V8.5z" /><path d="M9 14a1 1 0 001 1h0a1 1 0 001-1v-1a1 1 0 00-1-1h0a1 1 0 00-1 1v1z" /></svg>
               Reprendre
             </span>
           </button>
           
-          <!-- Bouton Stop -->
-          <button id="btnStop" type="button" class="btn btn-secondary w-full sm:w-auto" disabled>
+          <!-- CORRECTION STYLE BOUTON + "hidden" -->
+          <button id="btnStop" type="button" 
+                  class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 focus:ring-indigo-500 w-full sm:w-auto hidden" 
+                  disabled>
              <span class="flex items-center justify-center gap-2">
               <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5v7a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 015 10.5v-7z" clip-rule="evenodd" /></svg>
               Stop
             </span>
           </button>
 
-          <!-- Timer & Vumètre -->
+          <!-- Timer & Vumètre (Inchangé) -->
           <div class="flex-1 w-full pt-2 sm:pt-0">
             <div class="h-2 rounded-full bg-white/60 overflow-hidden"><div id="meter" class="h-2 bg-green-500 transition-all duration-75" style="width:0%"></div></div>
             <p class="mt-1 text-xs text-gray-600 text-right"><span id="timer">00:00</span> / 02:00</p>
@@ -370,13 +332,17 @@
         
         <!-- Prévisualisation & Transcription -->
         <div id="previewWrap" class="hidden space-y-4">
-          <button id="btnReRecord" type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+          <!-- CORRECTION STYLE BOUTON -->
+          <button id="btnReRecord" type="button" 
+                  class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 focus:ring-indigo-500 text-sm">
             ↺ Réenregistrer
           </button>
           <audio id="player" controls class="w-full"></audio>
-          <div id="transcriptionWrap" class="p-3 rounded-lg bg-white/60 border border-white/80">
+          
+          <!-- CORRECTION TRANSCRIPTION: Caché par défaut -->
+          <div id="transcriptionWrap" class="p-3 rounded-lg bg-white/60 border border-white/80 hidden">
             <p class="text-xs font-medium text-gray-500 mb-1">Transcription (auto)</p>
-            <p id="transcriptionText" class="text-sm text-gray-700 italic">Génération de la transcription...</p>
+            <p id="transcriptionText" class="text-sm text-gray-700 italic">La transcription sera générée par le serveur après l'envoi.</p>
           </div>
           <p id="fileInfo" class="mt-1 text-xs text-gray-500"></p>
         </div>
@@ -385,7 +351,10 @@
       <!-- Footer Modale -->
       <div class="p-4 border-t border-white/50 flex items-center justify-between">
         <p class="text-xs text-gray-500">État : <span id="status">Prêt</span></p>
-        <button id="btnSend" class="btn btn-primary btn-disabled" disabled>
+        <!-- CORRECTION STYLE BOUTON -->
+        <button id="btnSend" 
+                class="px-5 py-2 font-semibold rounded-full shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 btn-disabled" 
+                disabled>
           Envoyer cette réponse
         </button>
       </div>
@@ -404,14 +373,9 @@
     /* ============================== NOTIFICATIONS (TOASTS) =========================== */
     /* =================================================================================== */
     
-    /**
-     * Affiche une notification (toast).
-     * @param {string} msg Le message à afficher.
-     * @param {'info'|'ok'|'warn'|'err'} type Le type de toast (couleur).
-     */
     function toast(msg, type = 'info') {
       const w = $('#toasts');
-      if (!w) return; // Sécurité si l'élément n'existe pas
+      if (!w) return;
       const d = document.createElement('div');
       let c = 'bg-gray-700'; // info
       if (type === 'ok') c = 'bg-green-600';
@@ -422,7 +386,6 @@
       d.textContent = msg;
       w.appendChild(d);
       
-      // Animation d'apparition
       requestAnimationFrame(() => {
           requestAnimationFrame(() => {
               d.classList.remove('translate-x-full', 'opacity-0');
@@ -430,10 +393,9 @@
           });
       });
 
-      // Animation de disparition
       setTimeout(() => {
         d.classList.add('translate-x-full', 'opacity-0');
-        d.addEventListener('transitionend', () => d.remove(), { once: true }); // Assurer suppression unique
+        d.addEventListener('transitionend', () => d.remove(), { once: true });
       }, 3500);
     }
 
@@ -446,46 +408,26 @@
       STATUS_PREFIX: 'chops_voiceform_status_'
     };
 
-    /** Enregistre les métadonnées de profil */
     function saveMeta(meta) {
-      try {
-        localStorage.setItem(LS_KEYS.META, JSON.stringify(meta));
-      } catch (e) {
-        console.error("Erreur sauvegarde localStorage (meta):", e);
-        toast("Impossible de sauvegarder le profil.", "err");
-      }
+      try { localStorage.setItem(LS_KEYS.META, JSON.stringify(meta)); } 
+      catch (e) { console.error("Erreur sauvegarde localStorage (meta):", e); toast("Impossible de sauvegarder le profil.", "err"); }
     }
     
-    /** Charge les métadonnées de profil */
     function loadMeta() {
-      try {
-        return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}');
-      } catch (e) {
-         console.error("Erreur chargement localStorage (meta):", e);
-        return {};
-      }
+      try { return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}'); } 
+      catch (e) { console.error("Erreur chargement localStorage (meta):", e); return {}; }
     }
 
-    /** Enregistre le statut des réponses pour un identifiant */
     function saveStatus(studentId, status) {
       if (!studentId) return;
-      try {
-        localStorage.setItem(LS_KEYS.STATUS_PREFIX + studentId, JSON.stringify(status));
-      } catch (e) {
-         console.error("Erreur sauvegarde localStorage (status):", e);
-         toast("Impossible de sauvegarder la progression.", "err");
-      }
+      try { localStorage.setItem(LS_KEYS.STATUS_PREFIX + studentId, JSON.stringify(status)); } 
+      catch (e) { console.error("Erreur sauvegarde localStorage (status):", e); toast("Impossible de sauvegarder la progression.", "err"); }
     }
 
-    /** Charge le statut des réponses pour un identifiant */
     function loadStatus(studentId) {
       if (!studentId) return {};
-      try {
-        return JSON.parse(localStorage.getItem(LS_KEYS.STATUS_PREFIX + studentId) || '{}');
-      } catch (e) {
-         console.error("Erreur chargement localStorage (status):", e);
-        return {};
-      }
+      try { return JSON.parse(localStorage.getItem(LS_KEYS.STATUS_PREFIX + studentId) || '{}'); } 
+      catch (e) { console.error("Erreur chargement localStorage (status):", e); return {}; }
     }
     
     /* =================================================================================== */
@@ -493,7 +435,7 @@
     /* =================================================================================== */
 
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("DOM Chargé, initialisation..."); // Log de démarrage
+      console.log("DOM Chargé, initialisation...");
 
       // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
@@ -502,8 +444,6 @@
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
-      // NETTOYAGE: Suppression de la référence au helper text
-      // const cardsHelperText = $('#cardsHelperText'); 
       
       const recordModal = $('#recordModal');
       const modalClose = $('#modalClose');
@@ -514,13 +454,11 @@
       const progressPct = $('#progressPct');
       const progressBar = $('#progressBar');
       
-      // Vérifier si les éléments principaux existent
       if (!profileModal || !metaForm || !saveProfileBtn || !mainContent) {
           console.error("Éléments UI principaux manquants ! Vérifiez les IDs HTML.");
           toast("Erreur critique: Interface incomplète.", "err");
-          return; // Arrêter l'initialisation
+          return;
       }
-
 
       // --- État de l'application ---
       let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
@@ -530,68 +468,46 @@
       let lastTrigger = null;
       let sending = false;
       let currentAnimatedPct = 0;
-      let isSubmittingProfile = false; // Flag pour éviter double soumission
+      let isSubmittingProfile = false;
 
-      // --- Branding ---
+      // --- Branding (Inchangé) ---
       try {
-        // CORRECTION BRANDING: Utiliser document.title pour l'onglet et #brandTitle pour le H1
-        const brandTitleText = CONFIG.BRAND.TITLE || "Feedback App"; // Fallback
+        const brandTitleText = CONFIG.BRAND.TITLE || "Feedback App";
         document.title = brandTitleText; 
         const brandTitleEl = $('#brandTitle');
         if (brandTitleEl) brandTitleEl.textContent = brandTitleText;
-        
-        const brandLogoEl = $('#brandLogo');
-        if (brandLogoEl) brandLogoEl.src = CONFIG.BRAND.LOGO_URL;
-        
-        const faviconEl = $('#favicon');
-        if (faviconEl) faviconEl.href = CONFIG.BRAND.FAVICON_URL;
-        
+        if ($('#brandLogo')) $('#brandLogo').src = CONFIG.BRAND.LOGO_URL;
+        if ($('#favicon')) $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
       } catch (e) {
           console.error("Erreur configuration Branding:", e);
           toast("Erreur chargement branding.", "warn");
       }
 
-
       // ------------------------------------
       // Initialisation du profil
       // ------------------------------------
-      /**
-       * Gère la suspension de l'AudioContext par le navigateur
-       * lorsque l'onglet devient inactif.
-       */
+      
+      // CORRECTION: Déplacé ici (inchangé)
       document.addEventListener("visibilitychange", () => {
-        // Si on n'a pas d'AudioContext (pas d'enregistrement) ou s'il est déjà fermé
-        if (!audioContext || audioContext.state === 'closed') {
-          return;
-        }
-
+        if (!audioContext || audioContext.state === 'closed') return;
         if (document.visibilityState === 'visible') {
-          // L'utilisateur est revenu sur l'onglet
           console.log("Tab is visible, resuming AudioContext...");
           audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext", e));
         }
-        // Pas besoin de 'else' (suspendre) car le navigateur le fait déjà
-        // et le forcer pourrait arrêter le MediaRecorder.
       });
-      /**
-       * Charge le profil depuis le LS et remplit le formulaire.
-       * Affiche la modale si le profil n'est pas valide.
-       */
+      
       function initProfile() {
         console.log("Initialisation du profil...");
         const meta = loadMeta();
-        // Vérification plus stricte : tous les champs + consentement
         if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true) {
           console.log("Profil trouvé dans localStorage:", meta);
           currentMeta = meta;
-          // Pré-remplir le formulaire
           $('#studentCode').value = meta.studentCode;
           $('#cohort').value = meta.cohort;
           $('#profile').value = meta.profile;
           $('#used').value = meta.used;
           $('#consent').checked = meta.consent;
           
-          // Profil valide, on cache la modale et on charge les cartes
           profileModal.classList.add('hidden');
           mainContent.classList.remove('opacity-0');
           editProfileBtn.classList.remove('hidden');
@@ -599,33 +515,17 @@
           renderAllCards();
           console.log("Profil valide, affichage des cartes.");
         } else {
-          // Profil invalide ou incomplet, on affiche la modale
           console.log("Profil invalide ou absent, affichage de la modale.");
           profileModal.classList.remove('hidden');
-          mainContent.classList.add('opacity-0'); // Garder le contenu principal masqué
+          mainContent.classList.add('opacity-0');
           editProfileBtn.classList.add('hidden');
-          updateProgress(); // S'assurer que la progression est à 0 si aucun profil
+          updateProgress();
         }
       }
 
-      /**
-       * Gère la soumission du formulaire de profil.
-       */
       metaForm.addEventListener('submit', (e) => {
-        console.log('[FORM SUBMIT] Événement détecté.'); 
-        
-        if (e && typeof e.preventDefault === 'function') {
-            e.preventDefault();
-            console.log('[FORM SUBMIT] e.preventDefault() appelé.'); 
-        } else {
-            console.warn('[FORM SUBMIT] Événement "e" invalide.');
-            return; 
-        }
-        
-        if (isSubmittingProfile) {
-          console.log('[FORM SUBMIT] Soumission déjà en cours.');
-          return;
-        }
+        e.preventDefault();
+        if (isSubmittingProfile) return;
         
         console.log('[FORM SUBMIT] Début traitement...');
         isSubmittingProfile = true;
@@ -636,7 +536,6 @@
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
 
-        // Validation...
         if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
           toast('Identifiant invalide.', 'warn');
           isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); return;
@@ -658,28 +557,19 @@
         };
         
         saveMeta(currentMeta);
-        currentStatus = loadStatus(currentMeta.studentCode); // Important: charger le statut APRES avoir défini le studentCode
+        currentStatus = loadStatus(currentMeta.studentCode);
         
-        console.log('[FORM SUBMIT] Fermeture modale...');
         profileModal.classList.add('hidden');
-        
-        console.log('[FORM SUBMIT] Affichage contenu & rendu cartes...');
-        renderAllCards(); // Appeler AVANT d'afficher pour éviter le "flash"
+        renderAllCards();
         mainContent.classList.remove('opacity-0');
         editProfileBtn.classList.remove('hidden');
         toast('Profil enregistré !', 'ok');
         
         isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled');
-        console.log('[FORM SUBMIT] Terminé.');
-
       });
 
-
-      // Bouton pour rouvrir la modale de profil
       if (editProfileBtn) {
           editProfileBtn.addEventListener('click', () => {
-            console.log("Clic 'Modifier profil'");
-            // Pré-remplir la modale avec les infos actuelles (au cas où elles auraient changé)
             $('#studentCode').value = currentMeta.studentCode;
             $('#cohort').value = currentMeta.cohort;
             $('#profile').value = currentMeta.profile;
@@ -689,27 +579,21 @@
           });
       }
 
-
       // ------------------------------------
-      // Rendu des cartes et progression
+      // Rendu des cartes et progression (Inchangé)
       // ------------------------------------
 
-      /**
-       * Obtient la question spécifique pour le profil et le sujet.
-       */
       function getQuestion(profile, topic) {
         try {
            let effectiveProfile = profile || 'autre';
            let questions = CONFIG.QUESTIONS[effectiveProfile];
-           // Si le profil n'existe pas OU n'a pas la question spécifique, utiliser 'autre'
            if (!questions || !questions.hasOwnProperty(topic)) {
                effectiveProfile = 'autre';
                questions = CONFIG.QUESTIONS['autre'];
            }
-           // S'assurer que 'autre' existe et a la question
            if (!questions || !questions.hasOwnProperty(topic)) {
                console.error(`Question manquante pour topic '${topic}', même dans 'autre'.`);
-               return "[Question manquante]"; // Fallback plus explicite
+               return "[Question manquante]";
            }
            return questions[topic];
         } catch (e) {
@@ -718,23 +602,16 @@
         }
       }
       
-      /**
-       * (Re)Génère toutes les cartes de questions.
-       */
       function renderAllCards() {
-        console.log("renderAllCards - Profil actuel:", currentMeta.profile);
-        // Utiliser le profil courant ou 'autre' par défaut
         let effectiveProfile = currentMeta.profile || 'autre';
         let profileQuestions = CONFIG.QUESTIONS[effectiveProfile];
 
-        // Vérifier si le profil existe, sinon fallback sur 'autre'
         if (!profileQuestions || typeof profileQuestions !== 'object') {
             console.warn(`Profil '${effectiveProfile}' non trouvé, fallback sur 'autre'.`);
             effectiveProfile = 'autre';
             profileQuestions = CONFIG.QUESTIONS['autre'];
         }
         
-        // Vérifier si 'autre' existe et est valide
         if (!profileQuestions || typeof profileQuestions !== 'object') {
           console.error("Config questions invalide: 'autre' manque ou n'est pas un objet.");
           topics = [];
@@ -746,22 +623,16 @@
         topics = Object.keys(profileQuestions);
         console.log(`Utilisation profil '${effectiveProfile}', Topics:`, topics);
 
-        if (topics.length === 0 && effectiveProfile === 'autre') {
-          // Si même 'autre' n'a pas de questions
-           console.error("Aucune question définie, même pour le profil 'autre'.");
+        if (topics.length === 0) {
+           console.error("Aucune question définie.");
            if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question configurée.</p>';
-        } else if (topics.length === 0) {
-           // Si le profil spécifique n'a pas de questions (devrait avoir fallback sur 'autre')
-           console.warn(`Profil '${effectiveProfile}' n'a aucune question définie.`);
-           if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question pour ce profil.</p>';
         } else {
-           // On a des questions, on peut vider la grille
            if (cardsGrid) cardsGrid.innerHTML = ''; 
            
            topics.forEach(topic => {
              const entry = currentStatus[topic];
              const done = !!entry?.done;
-             const questionText = getQuestion(effectiveProfile, topic); // Utiliser la fonction sécurisée
+             const questionText = getQuestion(effectiveProfile, topic);
              
              const card = document.createElement('button');
              card.type = 'button';
@@ -787,44 +658,29 @@
              if (cardsGrid) cardsGrid.appendChild(card);
            });
         }
-
-        updateProgress(); // Mettre à jour la progression même s'il n'y a pas de cartes
-        console.log("Cartes rendues.");
+        updateProgress();
       }
 
-
-      /**
-       * Met à jour la barre de progression.
-       */
       function updateProgress() {
-        // CORRECTION: S'assurer que topics est bien un array avant filter
         const validTopics = Array.isArray(topics) ? topics : []; 
         const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
         const total = validTopics.length; 
         const pct = (total > 0) ? Math.round((done / total) * 100) : 0;
         
-        console.log(`Update Progress: ${done}/${total} (${pct}%)`); 
-        
         if (progressText) progressText.textContent = `${done}/${total} complétées`;
-        
         animateCounter(progressPct, currentAnimatedPct, pct, '%');
         currentAnimatedPct = pct;
-
         if (progressBar) progressBar.style.width = `${pct}%`;
       }
       
-      /** Anime un compteur de nombre. */
       function animateCounter(el, from, to, suffix = '') {
-        // ... (fonction inchangée) ...
          if (!el) return;
         if (from === to) { el.textContent = `${to}${suffix}`; return; }
-        
         const duration = 400; const frameRate = 1000 / 60;
         const totalFrames = Math.round(duration / frameRate);
         const diff = to - from;
         let frame = 0;
         let animationFrameId;
-
         function step() {
           frame++;
           const progress = 1 - Math.pow(1 - (frame / totalFrames), 2);
@@ -836,7 +692,7 @@
              el.textContent = `${to}${suffix}`;
           }
         }
-        cancelAnimationFrame(animationFrameId); // Annuler animation précédente si besoin
+        cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(step);
       }
       
@@ -860,14 +716,12 @@
       const fileInfo = $('#fileInfo');
 
       let mediaStream, mediaRecorder, audioChunks = [], audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
-      let audioTranscription = "";
+      let audioTranscription = ""; // Placeholder, géré par le backend
       let startedAt = 0, pausedAt = 0, totalPausedTime = 0;
       let timerInterval = null;
       let audioContext, analyser, dataArray;
       
-      /** Ouvre la modale pour un sujet donné */
       function openModal(topic, trigger) {
-         // ... (fonction inchangée) ...
         if (sending) { toast('Envoi en cours...', 'warn'); return; }
         if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
            toast('Veuillez valider votre profil.', 'warn');
@@ -887,9 +741,7 @@
         btnRecord.focus(); 
       }
 
-      /** Ferme la modale d'enregistrement */
       function closeModal() {
-         // ... (fonction inchangée) ...
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
@@ -908,19 +760,14 @@
           }
       });
       
-      /** Met à jour le texte de statut */
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
       
-      /** Formate les secondes en MM:SS */
       function hhmmss(s) {
-        // ... (fonction inchangée) ...
         const sec = Math.max(0, Math.floor(s));
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       }
       
-      /** Met à jour l'état du bouton d'envoi */
       function updateSendState() {
-        // ... (fonction inchangée) ...
         const canSend = currentMeta.consent && !!audioBlob && !sending;
         if (btnSend) {
             btnSend.disabled = !canSend;
@@ -930,7 +777,6 @@
 
       /** Réinitialise l'interface d'enregistrement */
       function resetRecording(inModal = false) {
-        // ... (fonction inchangée) ...
         mediaStream?.getTracks().forEach(t => t.stop());
         mediaStream = null;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -949,15 +795,24 @@
         
         if (inModal) {
           if(previewWrap) previewWrap.classList.add('hidden');
-          if(transcriptionWrap) transcriptionWrap.classList.add('hidden');
-          if(transcriptionText) transcriptionText.textContent = "Génération de la transcription...";
+          // CORRECTION: Assure que la barre de contrôle est visible
+          if ($('#controlsWrap')) $('#controlsWrap').classList.remove('hidden');
+          
+          // CORRECTION TRANSCRIPTION: Reste cachée
+          // if(transcriptionWrap) transcriptionWrap.classList.add('hidden'); 
+          // if(transcriptionText) transcriptionText.textContent = "Génération de la transcription...";
+          
           if(timerEl) timerEl.textContent = '00:00';
           if(meterBar) meterBar.style.width = '0%';
           
           if(btnRecord) btnRecord.classList.remove('hidden');
           if(btnPause) btnPause.classList.add('hidden');
           if(btnResume) btnResume.classList.add('hidden');
+          
+          // CORRECTION STOP: Cacher le bouton Stop
+          if(btnStop) btnStop.classList.add('hidden');
           if(btnStop) btnStop.disabled = true;
+          
           if(btnRecord) btnRecord.disabled = false;
           
           setStatus('Prêt');
@@ -973,9 +828,7 @@
       if(btnStop) btnStop.addEventListener('click', stopRecording);
       if(btnReRecord) btnReRecord.addEventListener('click', () => resetRecording(true));
 
-      /** Démarre l'enregistrement */
       async function startRecording() {
-         // ... (fonction inchangée) ...
         resetRecording(true);
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia({ 
@@ -1007,8 +860,13 @@
             startedAt = Date.now(); totalPausedTime = 0;
             setStatus('Enregistrement en cours…'); toast('Enregistrement démarré...');
             
-            btnRecord.classList.add('hidden'); btnPause.classList.remove('hidden');
-            btnResume.classList.add('hidden'); btnStop.disabled = false;
+            btnRecord.classList.add('hidden');
+            btnPause.classList.remove('hidden');
+            btnResume.classList.add('hidden');
+            
+            // CORRECTION STOP: Afficher et activer le bouton Stop
+            btnStop.classList.remove('hidden');
+            btnStop.disabled = false;
             
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1047,21 +905,19 @@
             audioUrl = URL.createObjectURL(audioBlob);
             if(player) player.src = audioUrl;
             if(previewWrap) previewWrap.classList.remove('hidden');
-            if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
+            
+            // CORRECTION: Cacher la barre de contrôle
+            if ($('#controlsWrap')) $('#controlsWrap').classList.add('hidden');
+            
             if(fileInfo && timerEl) fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
             
             setStatus('Prêt à l’envoi');
-            audioTranscription = "[CLIENT_TRANSCRIPTION_DISABLED]"; // C'est un placeholder
-
-            // On affiche un message pour rassurer l'utilisateur
-            if(transcriptionText) transcriptionText.textContent = "La transcription sera générée par le serveur après l'envoi.";
-            if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
-
-            // On active le bouton "Envoyer"
-            updateSendState();
+            audioTranscription = "[CLIENT_TRANSCRIPTION_DISABLED]"; // Placeholder
             
-            mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
-            
+            // CORRECTION TRANSCRIPTION: Plus besoin d'afficher la box
+            // if(transcriptionText) transcriptionText.textContent = "La transcription sera générée par le serveur après l'envoi.";
+            // if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
+
             updateSendState();
             
             mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
@@ -1083,9 +939,7 @@
         }
       }
       
-      /** Met l'enregistrement en pause */
       function pauseRecording() {
-         // ... (fonction inchangée) ...
         if (mediaRecorder?.state === 'recording') {
           mediaRecorder.pause(); pausedAt = Date.now();
           clearInterval(timerInterval); timerInterval = null;
@@ -1094,9 +948,7 @@
         }
       }
       
-      /** Reprend l'enregistrement */
       function resumeRecording() {
-         // ... (fonction inchangée) ...
         if (mediaRecorder?.state === 'paused') {
           mediaRecorder.resume();
           totalPausedTime += (Date.now() - pausedAt); pausedAt = 0;
@@ -1119,13 +971,17 @@
         }
       }
       
-      /** Arrête l'enregistrement */
       function stopRecording() {
-         // ... (fonction inchangée) ...
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
           mediaRecorder.stop(); toast('Enregistrement arrêté.');
-          if(btnRecord) btnRecord.classList.remove('hidden'); if(btnPause) btnPause.classList.add('hidden');
-          if(btnResume) btnResume.classList.add('hidden'); if(btnStop) btnStop.disabled = true;
+          
+          // CORRECTION STOP: Cacher les boutons
+          if(btnRecord) btnRecord.classList.remove('hidden'); // S'affiche via resetRecording
+          if(btnPause) btnPause.classList.add('hidden');
+          if(btnResume) btnResume.classList.add('hidden');
+          if(btnStop) btnStop.classList.add('hidden'); // Cacher Stop
+          if(btnStop) btnStop.disabled = true;
+          
           if(btnRecord) btnRecord.disabled = false;
         }
       }
@@ -1134,9 +990,7 @@
       // Logique d'Envoi et API
       // ------------------------------------
 
-      /** Wrapper Fetch sécurisé pour Google Apps Script */
       async function fetchGAS(url, payload) {
-         // ... (fonction inchangée) ...
         if (!url || url === "À_RENSEIGNER") throw new Error("Backend URL non configurée.");
         try {
           const response = await fetch(url, {
@@ -1153,9 +1007,7 @@
         } catch (err) { console.error("Erreur fetchGAS:", err); throw new Error("Communication serveur échouée."); }
       }
 
-      /** Convertit un Blob en Base64. */
       function blobToBase64(blob) {
-         // ... (fonction inchangée) ...
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -1169,10 +1021,17 @@
 
       /** Envoie la réponse finale. */
       async function submitOne() {
-         // ... (fonction inchangée) ...
         if (sending || !audioBlob) return; 
         
-        sending = true; setStatus('Envoi en cours…'); updateSendState(); toast('Envoi de votre réponse...');
+        sending = true; 
+        
+        // CORRECTION FEEDBACK UTILISATEUR: Mettre à jour le statut et désactiver les boutons
+        setStatus('Envoi et transcription en cours...'); 
+        if (modalClose) modalClose.disabled = true;
+        if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
+        
+        updateSendState(); // Désactive le bouton Envoyer
+        toast('Envoi de votre réponse...');
         
         try {
           setStatus('Préparation envoi...'); const fileBase64 = await blobToBase64(audioBlob);
@@ -1181,11 +1040,13 @@
 
           const payload = {
             action: "uploadAudio", ...currentMeta, topic: currentTopic,
-            durationSec: durationSec, mimeType: mimeType, transcription: audioTranscription,
+            durationSec: durationSec, mimeType: mimeType,
+            transcription: audioTranscription, // C'est juste un placeholder
             fileBase64: fileBase64, clientUA: navigator.userAgent
           };
 
-          setStatus('Envoi données...'); const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+          setStatus('Envoi et transcription en cours...'); // Répéter au cas où
+          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
           if (json.ok === false) { throw new Error(json.error || 'Erreur inconnue enregistrement.'); }
 
           setStatus('Terminé ✅'); toast('Réponse envoyée !', 'ok');
@@ -1193,18 +1054,24 @@
           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
           saveStatus(currentMeta.studentCode, currentStatus);
           
-          renderAllCards(); closeModal();
+          renderAllCards(); 
+          closeModal();
         } catch (err) {
           console.error('Erreur envoi final:', err);
-          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err'); setStatus('Erreur d’envoi');
+          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err'); 
+          setStatus('Erreur d’envoi');
         } finally {
-          sending = false; updateSendState();
+          sending = false; 
+          // CORRECTION FEEDBACK UTILISATEUR: Réactiver les boutons
+          if (modalClose) modalClose.disabled = false;
+          if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
+          updateSendState();
         }
       }
 
       // --- Démarrage ---
       initProfile(); // Lancer l'initialisation
-      console.log("Initialisation terminée."); // Log de fin d'init
+      console.log("Initialisation terminée.");
       
     }); // Fin de DOMContentLoaded
   </script>
