@@ -185,6 +185,17 @@
 
     /* Masqué */
     .hidden { display: none; }
+
+    /* CORRECTION MOBILE: Ajustements pour la modale */
+    #profileModal {
+        align-items: flex-start; /* Aligner en haut */
+        padding-top: 2.5rem; /* Ajouter un espace en haut (pt-10) */
+    }
+    #profileModal .glass-bubble {
+        overflow-y: auto; /* Permettre le défilement DANS la modale */
+        max-height: 85vh; /* Limiter la hauteur */
+    }
+
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
@@ -232,10 +243,12 @@
   <!-- =================================================================================== -->
 
   <!-- Modale de Profil (Affichée au chargement) -->
-  <div id="profileModal" class="fixed inset-0 z-40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+  <!-- CORRECTION MOBILE: Ajout de pt-10 et items-start -->
+  <div id="profileModal" class="fixed inset-0 z-40 flex items-start justify-center p-4 pt-10" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
-    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl p-6 sm:p-8 space-y-6">
+    <!-- CORRECTION MOBILE: Ajout de max-h-[85vh] et overflow-y-auto -->
+    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto">
       <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900">Vos informations</h2>
       <p class="text-sm text-gray-600">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
       
@@ -453,7 +466,7 @@
       // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
       const metaForm = $('#metaForm');
-      const saveProfileBtn = $('#saveProfileBtn'); // Garder la référence même si on n'écoute plus le clic
+      const saveProfileBtn = $('#saveProfileBtn');
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
@@ -522,6 +535,7 @@
        */
       // CORRECTION : Écouter l'événement 'submit' du formulaire
       metaForm.addEventListener('submit', (e) => {
+        // CORRECTION: Placer preventDefault() au tout début
         e.preventDefault(); // Empêcher le rechargement de la page par défaut
         e.stopPropagation(); // Empêcher la propagation si nécessaire
 
@@ -531,6 +545,7 @@
           return;
         }
         
+        console.log('Traitement de la soumission du profil...'); // Log pour débogage
         isSubmittingProfile = true;
         saveProfileBtn.disabled = true; // Désactiver le bouton pendant le traitement
         saveProfileBtn.classList.add('btn-disabled');
@@ -563,6 +578,7 @@
         }
 
         // Si tout est valide, mettre à jour l'état et l'UI
+        console.log('Validation réussie, enregistrement...'); // Log pour débogage
         currentMeta = {
           studentCode: studentCode,
           cohort: cohort,
@@ -576,9 +592,11 @@
         
         // Fermer la modale
         profileModal.classList.add('hidden');
+        console.log('Modale cachée.'); // Log pour débogage
         
         // Afficher le contenu principal et les cartes (avec un léger délai pour l'animation)
         setTimeout(() => {
+          console.log('Affichage du contenu principal et rendu des cartes...'); // Log pour débogage
           renderAllCards();
           mainContent.classList.remove('opacity-0');
           editProfileBtn.classList.remove('hidden');
@@ -587,7 +605,9 @@
           isSubmittingProfile = false; // Réinitialiser le flag
           saveProfileBtn.disabled = false; // Réactiver le bouton
           saveProfileBtn.classList.remove('btn-disabled');
-        }, 150); // Petit délai pour laisser le temps à la modale de disparaître
+          console.log('Traitement de la soumission terminé.'); // Log pour débogage
+        }, 50); // Délai réduit pour accélérer l'affichage
+
       });
 
 
