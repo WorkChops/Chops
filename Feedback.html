@@ -239,6 +239,7 @@
       <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900">Vos informations</h2>
       <p class="text-sm text-gray-600">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
       
+      <!-- CORRECTION: Rétablissement du 'submit' listener sur le formulaire -->
       <form id="metaForm" class="space-y-5" novalidate>
         <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -414,12 +415,12 @@
       STATUS_PREFIX: 'chops_voiceform_status_'
     };
 
-    /** Enregistre les métadonnéess de profil */
+    /** Enregistre les métadonnées de profil */
     function saveMeta(meta) {
       localStorage.setItem(LS_KEYS.META, JSON.stringify(meta));
     }
     
-    /** Charge les métadonnéess de profil */
+    /** Charge les métadonnées de profil */
     function loadMeta() {
       try {
         return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}');
@@ -452,7 +453,7 @@
       // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
       const metaForm = $('#metaForm');
-      const saveProfileBtn = $('#saveProfileBtn');
+      const saveProfileBtn = $('#saveProfileBtn'); // Garder la référence même si on n'écoute plus le clic
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
@@ -475,6 +476,7 @@
       let lastTrigger = null;
       let sending = false;
       let currentAnimatedPct = 0;
+      let isSubmittingProfile = false; // Flag pour éviter double soumission
 
       // --- Branding ---
       $('#appTitle').textContent = CONFIG.BRAND.TITLE;
@@ -515,83 +517,79 @@
         }
       }
 
-      /* Gère la validation du formulaire de profil.*/
-let isSubmittingProfile = false;
+      /**
+       * Gère la soumission du formulaire de profil.
+       */
+      // CORRECTION : Écouter l'événement 'submit' du formulaire
+      metaForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Empêcher le rechargement de la page par défaut
+        e.stopPropagation(); // Empêcher la propagation si nécessaire
 
-// Gestionnaire pour le bouton de validation
-saveProfileBtn.addEventListener('click', (e) => {
-  e.preventDefault(); // Par sécurité
-  e.stopPropagation();
-  
-  // Empêcher les soumissions multiples
-  if (isSubmittingProfile) {
-    console.log('Soumission déjà en cours, ignorée');
-    return;
-  }
-  
-  isSubmittingProfile = true;
-  saveProfileBtn.disabled = true;
-  saveProfileBtn.classList.add('btn-disabled');
-  
-  const studentCode = $('#studentCode').value.trim();
-  const cohort = $('#cohort').value.trim();
-  const consent = $('#consent').checked;
+        // Empêcher les soumissions multiples
+        if (isSubmittingProfile) {
+          console.log('Soumission déjà en cours, ignorée');
+          return;
+        }
+        
+        isSubmittingProfile = true;
+        saveProfileBtn.disabled = true; // Désactiver le bouton pendant le traitement
+        saveProfileBtn.classList.add('btn-disabled');
 
-  if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
-    toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-    isSubmittingProfile = false;
-    saveProfileBtn.disabled = false;
-    saveProfileBtn.classList.remove('btn-disabled');
-    return;
-  }
-  if (cohort.length < 1) {
-    toast('Veuillez renseigner votre contexte.', 'warn');
-    isSubmittingProfile = false;
-    saveProfileBtn.disabled = false;
-    saveProfileBtn.classList.remove('btn-disabled');
-    return;
-  }
-  if (!consent) {
-    toast('Le consentement est requis pour continuer.', 'warn');
-    isSubmittingProfile = false;
-    saveProfileBtn.disabled = false;
-    saveProfileBtn.classList.remove('btn-disabled');
-    return;
-  }
+        const studentCode = $('#studentCode').value.trim();
+        const cohort = $('#cohort').value.trim();
+        const consent = $('#consent').checked;
 
-  currentMeta = {
-    studentCode: studentCode,
-    cohort: cohort,
-    profile: $('#profile').value,
-    used: $('#used').value,
-    consent: true
-  };
-  
-  saveMeta(currentMeta);
-  currentStatus = loadStatus(currentMeta.studentCode);
-  
-  // Fermer la modale
-  profileModal.classList.add('hidden');
-  
-  // Afficher les cartes
-  setTimeout(() => {
-    renderAllCards();
-    mainContent.classList.remove('opacity-0');
-    editProfileBtn.classList.remove('hidden');
-    toast('Profil enregistré !', 'ok');
-    
-    isSubmittingProfile = false;
-    saveProfileBtn.disabled = false;
-    saveProfileBtn.classList.remove('btn-disabled');
-  }, 150);
-});
+        // Validation des champs
+        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
+          toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
+          isSubmittingProfile = false; // Réactiver pour nouvelle tentative
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.classList.remove('btn-disabled');
+          return;
+        }
+        if (cohort.length < 1) {
+          toast('Veuillez renseigner votre contexte.', 'warn');
+          isSubmittingProfile = false;
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.classList.remove('btn-disabled');
+          return;
+        }
+        if (!consent) {
+          toast('Le consentement est requis pour continuer.', 'warn');
+          isSubmittingProfile = false;
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.classList.remove('btn-disabled');
+          return;
+        }
 
-// AUSSI bloquer la soumission du formulaire lui-même
-metaForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  return false;
-});
+        // Si tout est valide, mettre à jour l'état et l'UI
+        currentMeta = {
+          studentCode: studentCode,
+          cohort: cohort,
+          profile: $('#profile').value,
+          used: $('#used').value,
+          consent: true
+        };
+        
+        saveMeta(currentMeta); // Sauvegarder dans localStorage
+        currentStatus = loadStatus(currentMeta.studentCode); // Charger le statut pour cet utilisateur
+        
+        // Fermer la modale
+        profileModal.classList.add('hidden');
+        
+        // Afficher le contenu principal et les cartes (avec un léger délai pour l'animation)
+        setTimeout(() => {
+          renderAllCards();
+          mainContent.classList.remove('opacity-0');
+          editProfileBtn.classList.remove('hidden');
+          toast('Profil enregistré !', 'ok');
+          
+          isSubmittingProfile = false; // Réinitialiser le flag
+          saveProfileBtn.disabled = false; // Réactiver le bouton
+          saveProfileBtn.classList.remove('btn-disabled');
+        }, 150); // Petit délai pour laisser le temps à la modale de disparaître
+      });
+
 
       // Bouton pour rouvrir la modale de profil
       editProfileBtn.addEventListener('click', () => {
@@ -1237,7 +1235,6 @@ metaForm.addEventListener('submit', (e) => {
           // Réactiver les boutons même si la transcription échoue
           btnRecord.disabled = false;
           btnStop.disabled = true; // Stop reste désactivé après l'arrêt
-          // CORRECTION: Ligne coupée
           updateSendState(); // Mettre à jour l'état du bouton Envoyer
         }
       }
