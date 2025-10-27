@@ -187,13 +187,43 @@
     .hidden { display: none; }
 
     /* CORRECTION MOBILE: Ajustements pour la modale */
+    /* Centrer sur les grands écrans */
+    @media (min-width: 640px) {
+      #profileModal {
+        align-items: center; /* Centrer verticalement sur sm+ */
+      }
+    }
+    /* Aligner en haut sur les petits écrans */
     #profileModal {
-        align-items: flex-start; /* Aligner en haut */
-        padding-top: 2.5rem; /* Ajouter un espace en haut (pt-10) */
+        align-items: flex-start; /* Aligner en haut par défaut */
+        padding-top: 1rem; /* Moins d'espace en haut */
+        padding-bottom: 1rem;
     }
     #profileModal .glass-bubble {
-        overflow-y: auto; /* Permettre le défilement DANS la modale */
-        max-height: 85vh; /* Limiter la hauteur */
+        display: flex; /* Utiliser flex pour séparer le contenu et le bouton fixe */
+        flex-direction: column;
+        overflow: hidden; /* Empêcher le débordement global */
+        max-height: 90vh; /* Augmenter légèrement la hauteur max */
+    }
+    #profileModal form {
+        overflow-y: auto; /* Permettre le défilement SEULEMENT pour le formulaire */
+        padding-bottom: 70px; /* Espace pour le bouton fixe */
+        flex-grow: 1; /* Prendre l'espace disponible */
+    }
+    /* Style pour le conteneur du bouton fixe en bas */
+    .modal-footer-sticky {
+        position: sticky; /* ou absolute si le parent est relative */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem 1.5rem; /* Correspondre au padding de la modale */
+        background: rgba(255, 255, 255, 0.6); /* Fond semi-transparent pour le pied */
+        backdrop-filter: blur(10px);
+         -webkit-backdrop-filter: blur(10px);
+        border-top: 1px solid var(--card-border);
+        margin: 0 -1.5rem -1rem; /* Compenser le padding parent pour aller bord à bord */
+        border-bottom-left-radius: 1rem; /* Arrondir les coins */
+        border-bottom-right-radius: 1rem;
     }
 
   </style>
@@ -243,17 +273,20 @@
   <!-- =================================================================================== -->
 
   <!-- Modale de Profil (Affichée au chargement) -->
-  <!-- CORRECTION MOBILE: Ajout de pt-10 et items-start -->
-  <div id="profileModal" class="fixed inset-0 z-40 flex items-start justify-center p-4 pt-10" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+  <!-- CORRECTION MOBILE: Ajout de pt-4 pb-4 et items-start -->
+  <div id="profileModal" class="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 pt-4 pb-4" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
-    <!-- CORRECTION MOBILE: Ajout de max-h-[85vh] et overflow-y-auto -->
-    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto">
-      <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900">Vos informations</h2>
-      <p class="text-sm text-gray-600">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
+    <!-- CORRECTION MOBILE: Structure flex + overflow + max-h -->
+    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <!-- En-tête de la modale -->
+       <div class="p-6 sm:p-8 pb-4 border-b border-white/50">
+           <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900">Vos informations</h2>
+           <p class="text-sm text-gray-600 mt-1">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
+       </div>
       
-      <!-- CORRECTION: Rétablissement du 'submit' listener sur le formulaire -->
-      <form id="metaForm" class="space-y-5" novalidate>
+      <!-- Formulaire avec défilement interne -->
+      <form id="metaForm" class="space-y-5 p-6 sm:p-8 overflow-y-auto flex-grow" novalidate>
         <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="studentCode" class="block text-sm font-medium">Identifiant</label>
@@ -292,12 +325,14 @@
             <span class="text-sm text-gray-700">J’accepte le stockage privé sur Google Drive (audio + transcription) et l’usage pédagogique/anonymisé de ces données. Vous pouvez demander la suppression à tout moment.</span>
           </label>
         </fieldset>
-
-        <div class="text-right pt-2">
-          <!-- CORRECTION: Changé type="button" en type="submit" -->
-          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
-        </div>
+         <!-- Espace ajouté pour ne pas coller au bouton fixe -->
+         <div class="h-4"></div>
       </form>
+
+       <!-- Pied de modale fixe -->
+       <div class="modal-footer-sticky text-right">
+            <button id="saveProfileBtn" type="submit" form="metaForm" class="btn btn-primary">Valider et commencer</button>
+        </div>
     </div>
   </div>
 
@@ -466,7 +501,7 @@
       // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
       const metaForm = $('#metaForm');
-      const saveProfileBtn = $('#saveProfileBtn');
+      const saveProfileBtn = $('#saveProfileBtn'); // Garder la référence même si on n'écoute plus le clic
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
@@ -533,31 +568,29 @@
       /**
        * Gère la soumission du formulaire de profil.
        */
-      // CORRECTION : Écouter l'événement 'submit' du formulaire
       metaForm.addEventListener('submit', (e) => {
-        // CORRECTION: Placer preventDefault() au tout début
-        e.preventDefault(); // Empêcher le rechargement de la page par défaut
-        e.stopPropagation(); // Empêcher la propagation si nécessaire
+        console.log('Submit event triggered'); // Log 1: Vérifier si l'event est capturé
+        e.preventDefault(); // Empêcher le rechargement (DOIT être la première chose)
+        e.stopPropagation(); // Optionnel mais peut aider
+        console.log('Default prevented'); // Log 2: Confirmer que preventDefault a été appelé
 
-        // Empêcher les soumissions multiples
         if (isSubmittingProfile) {
           console.log('Soumission déjà en cours, ignorée');
           return;
         }
         
-        console.log('Traitement de la soumission du profil...'); // Log pour débogage
+        console.log('Traitement de la soumission du profil...');
         isSubmittingProfile = true;
-        saveProfileBtn.disabled = true; // Désactiver le bouton pendant le traitement
+        saveProfileBtn.disabled = true;
         saveProfileBtn.classList.add('btn-disabled');
 
         const studentCode = $('#studentCode').value.trim();
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
 
-        // Validation des champs
         if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
           toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-          isSubmittingProfile = false; // Réactiver pour nouvelle tentative
+          isSubmittingProfile = false;
           saveProfileBtn.disabled = false;
           saveProfileBtn.classList.remove('btn-disabled');
           return;
@@ -577,8 +610,7 @@
           return;
         }
 
-        // Si tout est valide, mettre à jour l'état et l'UI
-        console.log('Validation réussie, enregistrement...'); // Log pour débogage
+        console.log('Validation réussie, enregistrement...');
         currentMeta = {
           studentCode: studentCode,
           cohort: cohort,
@@ -587,26 +619,24 @@
           consent: true
         };
         
-        saveMeta(currentMeta); // Sauvegarder dans localStorage
-        currentStatus = loadStatus(currentMeta.studentCode); // Charger le statut pour cet utilisateur
+        saveMeta(currentMeta);
+        currentStatus = loadStatus(currentMeta.studentCode);
         
-        // Fermer la modale
+        console.log('Fermeture de la modale...'); // Log 3: Juste avant de fermer
         profileModal.classList.add('hidden');
-        console.log('Modale cachée.'); // Log pour débogage
+        console.log('Modale cachée.'); // Log 4: Juste après avoir caché
+
+        // CORRECTION: Suppression du setTimeout
+        console.log('Affichage du contenu principal et rendu des cartes...');
+        renderAllCards();
+        mainContent.classList.remove('opacity-0');
+        editProfileBtn.classList.remove('hidden');
+        toast('Profil enregistré !', 'ok');
         
-        // Afficher le contenu principal et les cartes (avec un léger délai pour l'animation)
-        setTimeout(() => {
-          console.log('Affichage du contenu principal et rendu des cartes...'); // Log pour débogage
-          renderAllCards();
-          mainContent.classList.remove('opacity-0');
-          editProfileBtn.classList.remove('hidden');
-          toast('Profil enregistré !', 'ok');
-          
-          isSubmittingProfile = false; // Réinitialiser le flag
-          saveProfileBtn.disabled = false; // Réactiver le bouton
-          saveProfileBtn.classList.remove('btn-disabled');
-          console.log('Traitement de la soumission terminé.'); // Log pour débogage
-        }, 50); // Délai réduit pour accélérer l'affichage
+        isSubmittingProfile = false;
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.classList.remove('btn-disabled');
+        console.log('Traitement de la soumission terminé.');
 
       });
 
@@ -800,13 +830,6 @@
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
-        // CORRECTION: Suppression du 'confirm()'
-        // if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-        //   if (!confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?")) {
-        //     return;
-        //   }
-        // }
-        
         // Arrêter l'enregistrement et les flux s'ils sont actifs
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
@@ -856,7 +879,6 @@
         mediaStream?.getTracks().forEach(t => t.stop());
         mediaStream = null;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          // Éviter d'appeler stop() si déjà arrêté, peut causer des erreurs
           try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant du recorder"); }
         }
         mediaRecorder = null;
@@ -870,7 +892,7 @@
         audioBlob = null;
         audioTranscription = "";
         if (audioUrl) {
-           URL.revokeObjectURL(audioUrl); // Libérer la mémoire
+           URL.revokeObjectURL(audioUrl);
            audioUrl = null;
         }
         
@@ -879,22 +901,21 @@
         totalPausedTime = 0;
         
         if (inModal) {
-          previewWrap.classList.add('hidden'); // Cacher la prévisualisation
-          transcriptionWrap.classList.add('hidden'); // Cacher la transcription
-          transcriptionText.textContent = "Génération de la transcription..."; // Texte par défaut
-          timerEl.textContent = '00:00'; // Remettre le timer à zéro
-          meterBar.style.width = '0%'; // Remettre le vumètre à zéro
+          previewWrap.classList.add('hidden');
+          transcriptionWrap.classList.add('hidden');
+          transcriptionText.textContent = "Génération de la transcription...";
+          timerEl.textContent = '00:00';
+          meterBar.style.width = '0%';
           
-          // Afficher le bouton Enregistrer, cacher Pause/Reprendre
           btnRecord.classList.remove('hidden');
           btnPause.classList.add('hidden');
           btnResume.classList.add('hidden');
-          btnStop.disabled = true; // Désactiver Stop
+          btnStop.disabled = true;
           
-          btnRecord.disabled = false; // Activer Enregistrer
+          btnRecord.disabled = false;
           
-          setStatus('Prêt'); // Mettre le statut à "Prêt"
-          updateSendState(); // Mettre à jour l'état du bouton Envoyer
+          setStatus('Prêt');
+          updateSendState();
         }
       }
 
@@ -905,23 +926,15 @@
       btnResume.addEventListener('click', resumeRecording);
       btnStop.addEventListener('click', stopRecording);
       btnReRecord.addEventListener('click', () => {
-         // CORRECTION: Suppression du 'confirm()'
-         // if (audioBlob) {
-         //     if (!confirm("Voulez-vous vraiment effacer l'enregistrement actuel pour en faire un nouveau ?")) {
-         //         return;
-         //     }
-         // }
-         resetRecording(true); // Réinitialiser pour un nouvel enregistrement
+         resetRecording(true);
       });
 
       /** Démarre l'enregistrement */
       async function startRecording() {
-        resetRecording(true); // Assure un état propre avant de démarrer
+        resetRecording(true);
         try {
-          // Demander accès au micro
           mediaStream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
-              // Options pour améliorer la qualité si supporté (optionnel)
               noiseSuppression: true,
               echoCancellation: true
             } 
@@ -929,125 +942,103 @@
         } catch (err) {
           console.error("Erreur getUserMedia:", err);
           let errorMsg = 'Erreur : Micro refusé ou non trouvé.';
-          if (err.name === 'NotAllowedError') {
-            errorMsg = 'Vous devez autoriser l\'accès au microphone dans votre navigateur.';
-          } else if (err.name === 'NotFoundError') {
-             errorMsg = 'Aucun microphone n\'a été trouvé sur votre appareil.';
-          }
+          if (err.name === 'NotAllowedError') errorMsg = 'Vous devez autoriser l\'accès au microphone.';
+          else if (err.name === 'NotFoundError') errorMsg = 'Aucun microphone trouvé.';
           toast(errorMsg, 'err');
           setStatus('Erreur micro');
           return;
         }
 
         try {
-          // Initialiser le contexte audio pour le vumètre
           audioContext = new (window.AudioContext || window.webkitAudioContext)();
           analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256; // Précision du vumètre
+          analyser.fftSize = 256;
           dataArray = new Uint8Array(analyser.frequencyBinCount);
           const source = audioContext.createMediaStreamSource(mediaStream);
-          source.connect(analyser); // Connecter le micro à l'analyseur
+          source.connect(analyser);
 
-          // Choisir le meilleur format d'enregistrement supporté
           const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
-          mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm'; // Fallback
+          mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm';
           
           mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
 
-          // Stocker les données audio au fur et à mesure
           mediaRecorder.ondataavailable = e => {
             if (e.data && e.data.size > 0) audioChunks.push(e.data);
           };
 
-          // Actions au démarrage
           mediaRecorder.onstart = () => {
             startedAt = Date.now();
             totalPausedTime = 0;
             setStatus('Enregistrement en cours…');
             toast('Enregistrement démarré...');
             
-            // Mise à jour de l'UI des boutons
             btnRecord.classList.add('hidden');
             btnPause.classList.remove('hidden');
             btnResume.classList.add('hidden');
-            btnStop.disabled = false; // Activer Stop
+            btnStop.disabled = false;
             
-            // Démarrer le timer et le vumètre
-            if (timerInterval) clearInterval(timerInterval); // Sécurité
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-              // Calculer le temps écoulé en tenant compte des pauses
               const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
               const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
-              timerEl.textContent = hhmmss(sec); // Mettre à jour l'affichage du timer
+              timerEl.textContent = hhmmss(sec);
               
-              // Arrêt automatique si le temps max est atteint
               if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
                 stopRecording();
                 toast(`Temps maximum (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
               }
               
-              // Mettre à jour le vumètre
               if (analyser && dataArray) {
                 analyser.getByteTimeDomainData(dataArray);
                 let sum = 0;
                 for (let i = 0; i < dataArray.length; i++) {
-                  const v = (dataArray[i] - 128) / 128; // Normaliser entre -1 et 1
-                  sum += v * v; // Somme des carrés
+                  const v = (dataArray[i] - 128) / 128;
+                  sum += v * v;
                 }
-                const rms = Math.sqrt(sum / dataArray.length); // Root Mean Square (volume)
-                // Ajuster le multiplicateur pour une meilleure visualisation
+                const rms = Math.sqrt(sum / dataArray.length);
                 meterBar.style.width = Math.min(100, Math.floor(rms * 200)) + "%"; 
               }
-            }, 80); // Rafraîchir toutes les 80ms
+            }, 80);
           };
           
-          // Actions à l'arrêt de l'enregistrement
           mediaRecorder.onstop = () => {
-            clearInterval(timerInterval); // Arrêter le timer/vumètre
+            clearInterval(timerInterval);
             timerInterval = null;
-            meterBar.style.width = '0%'; // Remettre le vumètre à zéro
+            meterBar.style.width = '0%';
             
-            // Créer le fichier audio final (Blob)
             audioBlob = new Blob(audioChunks, { type: mimeType });
             
-            // Vérifier la taille du fichier
             if (audioBlob.size > CONFIG.LIMITS.MAX_BYTES) {
-              toast(`Fichier trop volumineux (> ${Math.round(CONFIG.LIMITS.MAX_BYTES / 1024 / 1024)} Mo). Veuillez réenregistrer.`, 'err');
-              resetRecording(true); // Réinitialiser
+              toast(`Fichier trop volumineux (> ${Math.round(CONFIG.LIMITS.MAX_BYTES / 1024 / 1024)} Mo).`, 'err');
+              resetRecording(true);
               return;
             }
-            
-            // Vérifier la durée minimale (ex: 1 seconde = ~1000 bytes)
             if (audioBlob.size < 1000) {
-               toast('Enregistrement trop court. Veuillez parler plus longtemps.', 'warn');
-               resetRecording(true); // Réinitialiser
+               toast('Enregistrement trop court.', 'warn');
+               resetRecording(true);
                return;
             }
 
-            // Afficher la prévisualisation
             audioUrl = URL.createObjectURL(audioBlob);
             player.src = audioUrl;
-            previewWrap.classList.remove('hidden'); // Afficher la zone de prévisualisation
-            transcriptionWrap.classList.remove('hidden'); // Afficher la zone de transcription
+            previewWrap.classList.remove('hidden');
+            transcriptionWrap.classList.remove('hidden');
             fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
             
             setStatus('Transcription en cours...');
-            btnRecord.disabled = true; // Désactiver Enregistrer pendant la transcription
-            btnStop.disabled = true;  // Stop est déjà désactivé mais pour être sûr
+            btnRecord.disabled = true;
+            btnStop.disabled = true;
             
-            // Démarrer la transcription (appel asynchrone)
             transcribeAudio(audioBlob); 
             
-            updateSendState(); // Mettre à jour l'état du bouton Envoyer (sera désactivé car sending=false)
+            updateSendState();
             
-            // Arrêter les flux et le contexte audio proprement
             mediaStream?.getTracks().forEach(t => t.stop());
             mediaStream = null;
-            audioContext?.close().catch(e => console.warn("Erreur fermeture tardive AudioContext"));
+            audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
             audioContext = null;
           };
 
-          // Gérer les erreurs potentielles du MediaRecorder
           mediaRecorder.onerror = (event) => {
               console.error(`Erreur MediaRecorder: ${event.error.name}`, event.error);
               toast(`Erreur d'enregistrement: ${event.error.message}`, 'err');
@@ -1055,27 +1046,25 @@
               resetRecording(true);
           };
           
-          // Démarrer l'enregistrement (déclenche onstart)
           mediaRecorder.start();
 
         } catch (err) {
-            console.error("Erreur lors de l'initialisation de l'enregistrement:", err);
+            console.error("Erreur initialisation enregistrement:", err);
             toast("Impossible de démarrer l'enregistrement.", 'err');
             setStatus('Erreur init');
-            resetRecording(true); // Nettoyer en cas d'erreur
+            resetRecording(true);
         }
       }
       
       /** Met l'enregistrement en pause */
       function pauseRecording() {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
-          mediaRecorder.pause(); // Mettre en pause l'enregistreur
-          pausedAt = Date.now(); // Noter l'heure de la pause
-          clearInterval(timerInterval); // Arrêter le timer/vumètre
+          mediaRecorder.pause();
+          pausedAt = Date.now();
+          clearInterval(timerInterval);
           timerInterval = null;
           setStatus('En pause');
           
-          // Mettre à jour l'UI des boutons
           btnPause.classList.add('hidden');
           btnResume.classList.remove('hidden');
         }
@@ -1084,17 +1073,14 @@
       /** Reprend l'enregistrement */
       function resumeRecording() {
         if (mediaRecorder && mediaRecorder.state === 'paused') {
-          mediaRecorder.resume(); // Reprendre l'enregistrement
-          // Ajouter le temps passé en pause au total des pauses
+          mediaRecorder.resume();
           totalPausedTime += (Date.now() - pausedAt); 
-          pausedAt = 0; // Réinitialiser l'heure de pause
+          pausedAt = 0;
           setStatus('Enregistrement en cours…');
           
-          // Mettre à jour l'UI des boutons
           btnPause.classList.remove('hidden');
           btnResume.classList.add('hidden');
           
-          // Relancer l'intervalle du timer/vumètre (copié de onstart)
           if (timerInterval) clearInterval(timerInterval);
           timerInterval = setInterval(() => {
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
@@ -1114,18 +1100,15 @@
       
       /** Arrête l'enregistrement */
       function stopRecording() {
-        // N'arrêter que si l'enregistrement est actif ou en pause
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-          mediaRecorder.stop(); // Déclenche l'événement 'onstop'
+          mediaRecorder.stop();
           toast('Enregistrement arrêté.');
           
-          // Remettre l'UI dans l'état initial (pré-enregistrement)
-          // Note: l'événement 'onstop' gérera l'affichage de la prévisualisation
-          btnRecord.classList.remove('hidden'); // Afficher Enregistrer
-          btnPause.classList.add('hidden');    // Cacher Pause
-          btnResume.classList.add('hidden');   // Cacher Reprendre
-          btnStop.disabled = true;             // Désactiver Stop
-          btnRecord.disabled = false;          // Réactiver Enregistrer (sera désactivé pendant la transcription)
+          btnRecord.classList.remove('hidden');
+          btnPause.classList.add('hidden');
+          btnResume.classList.add('hidden');
+          btnStop.disabled = true;
+          btnRecord.disabled = false;
         }
       }
 
@@ -1135,86 +1118,54 @@
 
       /**
        * Wrapper Fetch sécurisé pour Google Apps Script (contournement CORS)
-       * @param {string} url - URL du script GAS
-       * @param {object} payload - Données à envoyer
-       * @returns {Promise<object>} - La réponse JSON
        */
       async function fetchGAS(url, payload) {
         try {
-          // CORRECTION "Failed to Fetch" (CORS)
-          // On envoie en 'text/plain' pour éviter la pré-vérification OPTIONS
           const response = await fetch(url, {
             method: 'POST',
-            mode: 'cors', // Important pour les requêtes cross-origin
-            credentials: 'omit', // Ne pas envoyer de cookies
-            headers: {
-              // L'astuce CORS: prétendre envoyer du texte simple
-              'Content-Type': 'text/plain;charset=utf-8', 
-            },
-            body: JSON.stringify(payload), // Le corps est bien du JSON
-            redirect: 'follow' // Suivre les redirections si GAS en fait
+            mode: 'cors',
+            credentials: 'omit',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+            redirect: 'follow'
           });
-
           if (!response.ok) {
-            // Essayer de lire le message d'erreur du backend si possible
             let errorText = `Erreur réseau : ${response.statusText} (${response.status})`;
             try {
               const errorJson = await response.json();
-              if (errorJson && errorJson.error) {
-                 errorText = `Erreur backend : ${errorJson.error}`;
-              }
-            } catch(e) { /* Ignorer si la réponse n'est pas du JSON */ }
+              if (errorJson?.error) errorText = `Erreur backend : ${errorJson.error}`;
+            } catch(e) { /* ignore */ }
             throw new Error(errorText);
           }
-          
-          // Analyser la réponse JSON du backend
-          const jsonResponse = await response.json();
-          return jsonResponse; 
-
+          return response.json(); 
         } catch (err) {
            console.error("Erreur fetchGAS:", err);
-           // Renvoyer une erreur plus générique au lieu de l'erreur brute
-           throw new Error("La communication avec le serveur a échoué."); 
+           throw new Error("Communication serveur échouée."); 
         }
       }
 
-      /**
-       * Convertit un Blob en Base64.
-       * @param {Blob} blob - Le fichier audio.
-       * @returns {Promise<string>} - La chaîne Base64 (sans le préfixe data:).
-       */
+      /** Convertit un Blob en Base64. */
       function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             try {
-              const base64data = reader.result;
-              // Extraire seulement la partie base64 après la virgule
-              const base64 = base64data.split(',')[1];
-              if (!base64) {
-                 throw new Error("Conversion Base64 invalide.");
-              }
+              const base64 = reader.result.split(',')[1];
+              if (!base64) throw new Error("Conversion Base64 invalide.");
               resolve(base64);
-            } catch (err) {
-               reject(err);
-            }
+            } catch (err) { reject(err); }
           };
-          reader.onerror = (error) => reject(error); // Gérer les erreurs de lecture
-          reader.readAsDataURL(blob); // Lire le blob comme une URL de données
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(blob);
         });
       }
 
-      /**
-       * Appelle le backend pour transcrire l'audio.
-       * @param {Blob} audioBlob - Le fichier audio.
-       */
+      /** Appelle le backend pour transcrire l'audio. */
       async function transcribeAudio(audioBlob) {
-        // Vérifier si l'URL du backend est configurée
         if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Erreur: Le backend n\'est pas configuré (WEBAPP_URL).', 'err');
+          toast('Erreur: Backend non configuré.', 'err');
           setStatus('Erreur config');
-          transcriptionText.textContent = "[Erreur de configuration backend]";
-          // Permettre quand même l'envoi si la transcription échoue ? Oui.
+          transcriptionText.textContent = "[Erreur config backend]";
           btnRecord.disabled = false; 
           updateSendState();
           return;
@@ -1222,121 +1173,93 @@
         
         try {
           setStatus('Conversion audio...');
-          const fileBase64 = await blobToBase64(audioBlob); // Convertir l'audio
+          const fileBase64 = await blobToBase64(audioBlob);
           setStatus('Transcription en cours...');
           
-          const payload = {
-            action: "transcribe", // Action pour le backend
-            mimeType: mimeType, // Type de fichier audio
-            fileBase64: fileBase64 // Audio en base64
-          };
-
-          // Appeler le backend via notre fonction fetchGAS sécurisée
+          const payload = { action: "transcribe", mimeType: mimeType, fileBase64: fileBase64 };
           const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
-          // Vérifier la réponse du backend
           if (json.ok === false || typeof json.transcription !== 'string') {
-            throw new Error(json.error || 'Réponse de transcription invalide reçue.');
+            throw new Error(json.error || 'Réponse transcription invalide.');
           }
 
-          audioTranscription = json.transcription || "[Transcription vide]"; // Stocker la transcription
-          transcriptionText.textContent = audioTranscription; // Afficher
+          audioTranscription = json.transcription || "[Transcription vide]";
+          transcriptionText.textContent = audioTranscription;
           setStatus('Prêt à l’envoi');
           toast('Transcription réussie.', 'ok');
 
         } catch (err) {
-          console.error('Erreur de transcription:', err);
-          // Afficher un message d'erreur plus utile à l'utilisateur
-          toast(`La transcription a échoué (${err.message}). Vous pouvez quand même envoyer.`, 'err');
+          console.error('Erreur transcription:', err);
+          toast(`Transcription échouée (${err.message}). Envoi audio seul possible.`, 'err');
           setStatus('Erreur transcription');
-          transcriptionText.textContent = `[Échec de la transcription. Vous pouvez quand même envoyer l'audio.]`;
-          audioTranscription = "[TRANSCRIPTION_FAILED]"; // Marqueur d'échec
+          transcriptionText.textContent = `[Échec transcription. Envoi audio seul.]`;
+          audioTranscription = "[TRANSCRIPTION_FAILED]";
         } finally {
-          // Réactiver les boutons même si la transcription échoue
           btnRecord.disabled = false;
-          btnStop.disabled = true; // Stop reste désactivé après l'arrêt
-          updateSendState(); // Mettre à jour l'état du bouton Envoyer
+          btnStop.disabled = true;
+          updateSendState();
         }
       }
       
-      // Attacher la fonction d'envoi au clic du bouton Envoyer
       btnSend.addEventListener('click', submitOne);
 
-      /**
-       * Envoie la réponse finale (audio + métadonnées + transcription).
-       */
+      /** Envoie la réponse finale. */
       async function submitOne() {
-        // Empêcher les envois multiples ou si pas d'audio
         if (sending || !audioBlob) return; 
-        
-        // Vérifier à nouveau la configuration du backend
         if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Erreur: Le backend n\'est pas configuré (WEBAPP_URL).', 'err');
+          toast('Erreur: Backend non configuré.', 'err');
           return;
         }
 
-        sending = true; // Marquer comme "envoi en cours"
+        sending = true;
         setStatus('Envoi en cours…');
-        updateSendState(); // Désactiver le bouton Envoyer
+        updateSendState();
         toast('Envoi de votre réponse...');
         
         try {
-          // Convertir l'audio en base64 (peut prendre un peu de temps)
-          setStatus('Préparation de l\'envoi...');
+          setStatus('Préparation envoi...');
           const fileBase64 = await blobToBase64(audioBlob);
-          
-          // Récupérer la durée finale
           const [mm, ss] = timerEl.textContent.split(':').map(Number);
           const durationSec = (mm * 60 + ss) || 0;
 
-          // Préparer le payload complet pour le backend
           const payload = {
-            action: "uploadAudio", // Action pour le backend
-            ...currentMeta, // Inclure studentCode, cohort, profile, used, consent
-            topic: currentTopic, // Le sujet de la question
-            durationSec: durationSec, // Durée de l'audio
-            mimeType: mimeType, // Type de fichier audio
-            transcription: audioTranscription, // Transcription (ou marqueur d'échec)
-            fileBase64: fileBase64, // L'audio lui-même
-            clientUA: navigator.userAgent // Info sur le navigateur (optionnel)
+            action: "uploadAudio",
+            ...currentMeta,
+            topic: currentTopic,
+            durationSec: durationSec,
+            mimeType: mimeType,
+            transcription: audioTranscription,
+            fileBase64: fileBase64,
+            clientUA: navigator.userAgent
           };
 
-          setStatus('Envoi des données...');
-          // Envoyer au backend
+          setStatus('Envoi données...');
           const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
-          // Vérifier la réponse du backend
           if (json.ok === false) {
-            throw new Error(json.error || 'Erreur inconnue lors de l\'enregistrement.');
+            throw new Error(json.error || 'Erreur inconnue enregistrement.');
           }
 
           setStatus('Terminé ✅');
-          toast('Réponse envoyée avec succès !', 'ok');
+          toast('Réponse envoyée !', 'ok');
           
-          // Mettre à jour le statut localement pour marquer comme "fait"
-          currentStatus[currentTopic] = {
-            done: true,
-            at: new Date().toISOString(), // Date de l'envoi
-            durationSec: durationSec // Stocker la durée
-          };
-          saveStatus(currentMeta.studentCode, currentStatus); // Sauvegarder dans localStorage
+          currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
+          saveStatus(currentMeta.studentCode, currentStatus);
           
-          renderAllCards(); // Mettre à jour l'affichage de la carte
-          closeModal(); // Fermer la modale d'enregistrement
+          renderAllCards();
+          closeModal();
 
         } catch (err) {
-          console.error('Erreur d\'envoi final:', err);
-          // Afficher un message d'erreur clair
-          toast(`Erreur d’envoi : ${err.message}. Veuillez réessayer.`, 'err');
+          console.error('Erreur envoi final:', err);
+          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
           setStatus('Erreur d’envoi');
         } finally {
-          sending = false; // Marquer comme "envoi terminé"
-          updateSendState(); // Réactiver le bouton Envoyer si besoin
+          sending = false;
+          updateSendState();
         }
       }
 
       // --- Démarrage ---
-      // Lancer l'initialisation du profil au chargement de la page
       initProfile(); 
       
     }); // Fin de DOMContentLoaded
