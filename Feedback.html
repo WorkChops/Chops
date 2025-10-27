@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Le titre de l'onglet est configurable dans APP_CONFIG ci-dessous -->
+  <title>CHOPS – Retour vocal</title>
+  <meta name="description" content="Mini-Voiceform CHOPS — collecte sécurisée de retours vocaux.">
+  <!-- L'icône (favicon) est configurable dans APP_CONFIG ci-dessous -->
+  <link id="favicon" rel="icon" href="https://placehold.co/32x32/0A84FF/FFFFFF?text=C&font=inter">
+  
+  <!-- =================================================================== -->
+  <!-- ============ SECTION DE CONFIGURATION PRINCIPALE ============ -->
+  <!-- =================================================================== -->
+  <script id="app-config">
+    const APP_CONFIG = {
+      // --- URLs Principales (À MODIFIER) ---
+      
+      /** * (OBLIGATOIRE) L'URL de votre backend Google Apps Script.
+       * Doit ressembler à : "https://script.google.com/macros/s/..." 
+       */
+      WEBAPP_URL: "À_RENSEIGNER", 
+      
+      // --- Personnalisation de la Marque (À MODIFIER) ---
+      
+      /** Le titre principal affiché dans l'en-tête et l'onglet du navigateur */
+      BRAND_TITLE: "CHOPS – Retour vocal",
+      
+      /** * Le logo principal (affiché dans l'en-tête).
+       * Recommandé : 160x40px ou ratio similaire.
+       * Remplacez ce lien placeholder par l'URL de votre image.
+       */
+      BRAND_LOGO_URL: "https://placehold.co/160x40/000000/FFFFFF?text=CHOPS&font=inter",
+      
+      /** * Le logo "marque" (carré, utilisé sur les cartes).
+       * Recommandé : 40x40px.
+       * Remplacez ce lien placeholder par l'URL de votre image.
+       */
+      BRAND_MARK_URL: "https://placehold.co/40x40/0A84FF/FFFFFF?text=C&font=inter",
+      
+      /** * Le favicon (icône de l'onglet).
+       * Recommandé : 32x32px (format .ico, .png, ou .svg).
+       * Remplacez ce lien placeholder par l'URL de votre image.
+       */
+      BRAND_FAVICON_URL: "https://placehold.co/32x32/0A84FF/FFFFFF?text=C&font=inter",
+
+      // --- Paramètres Techniques (Garder par défaut) ---
+      
+      LIMITS: { MAX_SECONDS: 120, MAX_BYTES: 10 * 1024 * 1024 },
+      UI: { defaultCohort: "", defaultUsed: "CHOPS_plus_CHOPi" },
+      EXPORT: { action: "exportProgress" },
+      
+      // --- Questions par Profil (Peut être modifié) ---
+      
+      PROFILE_QUESTIONS: {
+        etudiant: {
+          declic: "En tant qu'étudiant, quel a été le 'déclic' ou le moment 'Aha!' en utilisant CHOPS/CHOPi pour vos projets ?",
+          usage: "Concrètement, pour quel projet de cours ou personnel avez-vous appliqué le framework CHOPS ?",
+          clarte: "Qu'est-ce qui a le plus clarifié votre compréhension de la gestion de projet grâce à CHOPS ?",
+          equipe: "Si vous l'avez utilisé en groupe, comment CHOPS a-t-il structuré votre travail d'équipe ?",
+          CHOPi: "Qu’est-ce qui vous a plu ou manqué dans l'outil CHOPi ?",
+          reutilisation: "Pensez-vous réutiliser CHOPS pour un futur stage, un projet ou même un mémoire ?",
+          libre: "Partagez un retour libre sur votre expérience d'apprentissage avec CHOPS."
+        },
+        entrepreneur: {
+          declic: "En tant qu'entrepreneur, quel 'déclic' CHOPS vous a-t-il donné sur votre propre startup ou projet ?",
+          usage: "Comment avez-vous utilisé CHOPS concrètement ? (ex: re-définir un MVP, pitcher, aligner l'équipe...)",
+          clarte: "Quelle partie du framework a le plus clarifié votre vision stratégique ?",
+          equipe: "Comment CHOPS vous a-t-il aidé à aligner votre équipe (fondateurs, employés) sur les objectifs ?",
+          CHOPi: "L'outil CHOPi vous a-t-il semblé utile pour un diagnostic rapide ? Qu'y manque-t-il pour un pro ?",
+          reutilisation: "Dans quel autre contexte business (levée de fonds, pivot, nouveau produit) réutiliseriez-vous CHOPS ?",
+          libre: "Partagez un retour libre sur la pertinence de CHOPS dans un contexte entrepreneurial."
+        },
+        freelance: {
+          declic: "En tant que freelance, quel 'déclic' avez-vous eu avec CHOPS pour mieux cadrer vos missions ?",
+          usage: "Comment avez-vous utilisé CHOPS ? (ex: brief client, devis, cadrage de projet...)",
+          clarte: "Qu'est-ce que CHOPS a clarifié dans votre relation client ou votre compréhension de leurs besoins ?",
+          equipe: "Comment CHOPS pourrait-il vous aider à mieux interagir avec les équipes de vos clients ?",
+          CHOPi: "L'outil CHOPi vous serait-il utile pour un 'audit flash' chez un client ?",
+          reutilisation: "Pensez-vous intégrer CHOPS dans votre 'boîte à outils' de freelance ? Pour quel type de mission ?",
+          libre: "Partagez un retour libre : en quoi CHOPS change (ou non) votre approche de freelance ?"
+        },
+        enseignant: {
+          declic: "En tant qu'enseignant, quel 'déclic' CHOPS vous a-t-il donné pour votre propre pédagogie ?",
+          usage: "Comment avez-vous utilisé CHOPS ou CHOPi avec vos élèves/étudiants ?",
+          clarte: "Qu'est-ce qui, selon vous, clarifie le mieux la gestion de projet pour les étudiants dans CHOPS ?",
+          equipe: "Comment vos étudiants ont-ils (ou pourraient-ils) collaborer en utilisant CHOPS ?",
+          CHOPi: "L'outil CHOPi vous semble-t-il être un bon support pédagogique ? Que lui manque-t-il ?",
+          reutilisation: "Dans quel autre cadre pédagogique (atelier, évaluation, module) pourriez-vous réutiliser CHOPS ?",
+          libre: "Partagez un retour libre sur le potentiel pédagogique du framework CHOPS."
+        },
+        autre: {
+          declic: "Quel a été votre 'déclic' personnel ou le moment 'Aha!' en découvrant CHOPS ?",
+          usage: "Dans votre contexte spécifique, quel usage concret avez-vous fait de CHOPi ou CHOPS ?",
+          clarte: "Qu’est-ce qui a le plus clarifié votre compréhension d'un problème ou d'un projet ?",
+          equipe: "Si vous avez collaboré, comment CHOPS a-t-il aidé votre groupe/équipe ?",
+          CHOPi: "Qu’est-ce qui vous a plu ou manqué dans l'outil CHOPi ?",
+          reutilisation: "Dans quel autre contexte (personnel, associatif, pro) réutiliseriez-vous CHOPS/CHOPi ?",
+          libre: "Exprimez librement le retour le plus utile pour nous."
+        }
+      }
+    };
+  </script>
+  <!-- =================================================================== -->
+  <!-- ============ FIN DE LA SECTION DE CONFIGURATION ============ -->
+  <!-- =================================================================== -->
+
+  
+  <!-- Chargement de Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Configuration de Tailwind (design minimaliste "light")
+    tailwind.config = { 
+      theme: { 
+        extend: { 
+          colors: { 
+            'light-bg': '#F5F5F7', // Fond principal (type Apple)
+            'light-card': 'rgba(255, 255, 255, 0.35)', // Bulle "frosted glass" (plus transparente)
+            'light-card-border': 'rgba(255, 255, 255, 0.6)', // Bordure "verre" (plus visible)
+            'light-accent': '#0A84FF', // Bleu Apple
+            'light-accent-hover': '#0070E0',
+            'light-success': '#30D158', // Vert Apple
+            'light-text-primary': '#1D1D1F', // Noir Apple
+            'light-text-secondary': '#6E6E73', // Gris Apple
+            'light-field': 'rgba(230, 230, 230, 0.5)', // Fond de champ
+          },
+          fontFamily:{ 
+            sans:["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"] 
+          },
+          animation: {
+            'bg-pan': 'bgPan 15s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            bgPan: {
+              '0%': { backgroundPosition: '0% 50%' },
+              '100%': { backgroundPosition: '100% 50%' },
+            }
+          }
+        } 
+      } 
+    }
+  </script>
+  
+  <!-- Styles CSS personnalisés -->
+  <style>
+    :root {
+      /* Palette "Light Mode" */
+      --bg: #F5F5F7;
+      --card: rgba(255, 255, 255, 0.35); /* Plus transparent */
+      --card-border: rgba(255, 255, 255, 0.6); /* Bordure plus nette */
+      --field: rgba(230, 230, 230, 0.5);
+      --focus: #0A84FF;
+      --primary: #0A84FF;
+      --primaryH: #0070E0;
+      --accent: #30D158;
+      --text-primary: #1D1D1F;
+      --text-secondary: #6E6E73;
+    }
+    
+    /* Fond animé pour l'effet de transparence */
+    html {
+      min-height: 100%;
+      background-size: 400% 400%;
+      background-image: linear-gradient(125deg, #FFFFFF, #F0F4FF, #FAF5FF, #FFFFFF);
+      animation: bgPan 15s ease-in-out infinite alternate;
+    }
+    
+    body {
+      background-color: transparent; /* Le fond est sur HTML */
+      color: var(--text-primary);
+      padding-bottom: 80px; /* Espace pour la barre de progression flottante */
+    }
+    
+    .focus-ring:focus { 
+      outline: 3px solid var(--focus); 
+      outline-offset: 2px;
+      border-color: var(--focus) !important;
+    }
+    
+    /* Style "Bulle Liquid Glass" (plus prononcé) */
+    .bubble {
+      background-color: var(--card);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    #toasts { 
+      position: fixed; 
+      top: 12px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      z-index: 100; /* Au-dessus de tout */
+      width: calc(100% - 2rem);
+      max-width: 400px;
+    }
+    
+    .toast-msg {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .meter-bar { transition: width 80ms linear; }
+    .hidden { display: none; }
+    
+    /* Style de la barre de progression */
+    .progressbar { 
+      height: 6px; 
+      width: 0%; 
+      transition: width .4s ease; 
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--focus), var(--accent));
+      background-size: 200% auto;
+      animation: progressShine 2s linear infinite;
+    }
+    
+    .btn-primary { 
+      background: var(--primary); 
+      color: white;
+      transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover { background: var(--primaryH); }
+    
+    /* Grille de cartes responsive */
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+    }
+    @media (min-width: 640px) {
+      #cards { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      #cards { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    /* Style de la carte */
+    .grid-card {
+      transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Barre de progression flottante */
+    #floatingProgressWrap {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 40;
+    }
+    
+    @keyframes progressShine {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    
+    /* Style pour la transcription */
+    #transcriptionBox {
+      background-color: rgba(230, 230, 230, 0.5);
+      border: 1px solid rgba(200, 200, 200, 0.4);
+      border-radius: 12px;
+      padding: 12px;
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+    
+    /* Styles pour la modale principale */
+    .main-modal {
+      z-index: 50;
+    }
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.2); /* Léger assombrissement */
+      backdrop-filter: blur(12px) saturate(150%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+    }
+    
+    /* SVG pour les icônes de contrôle */
+    .svg-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+    
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  
+  <!-- Icônes SVG pour les boutons (cachées) -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="icon-mic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path fill-rule="evenodd" d="M12 2a3 3 0 0 0-3 3v4a3 3 0 1 0 6 0V5a3 3 0 0 0-3-3ZM9 9.5A.5.5 0 0 1 9.5 9h5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-1ZM9 5a3 3 0 0 1 3-3 3 3 0 0 1 3 3v4a3 3 0 0 1-6 0V5Z"/><path d="M6.068 11.123A.5.5 0 0 1 6.5 11h11a.5.5 0 0 1 .432.123l.006.008A7 7 0 0 1 12 21a7 7 0 0 1-5.938-9.869Z"/></symbol>
+      <symbol id="icon-pause" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/></symbol>
+      <symbol id="icon-resume" viewBox="0 0 16 16" fill="currentColor"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></symbol>
+      <symbol id="icon-stop" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6A1.5 1.5 0 0 1 11 12.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5Z"/></symbol>
+      <symbol id="icon-redo" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 3a.5.5 0 0 0-.5.5v2.5a.5.5 0 0 0 1 0V4h1.5a.5.5 0 0 1 0 1H8.5V6a.5.5 0 0 0-1 0v-.5H6a.5.5 0 0 1 0-1h1.5V3.5A.5.5 0 0 0 8 3ZM8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11Zm0-1a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- En-tête -->
+  <header class="max-w-4xl mx-auto px-4 pt-8 pb-4 sm:pt-12 sm:pb-6">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <!-- Le logo est chargé dynamiquement par JS -->
+        <img id="brandLogo" src="" alt="Logo" class="h-10">
+        <!-- Le titre est chargé dynamiquement par JS -->
+        <h1 id="brandTitle" class="text-2xl font-semibold tracking-tight text-[var(--text-primary)]"></h1>
+      </div>
+      <button id="btnEditProfile" type="button" class="hidden text-sm font-medium text-[var(--primary)] hover:text-[var(--primaryH)]">
+        Modifier le profil
+      </button>
+    </div>
+    <button id="backendBadge" class="hidden text-xs px-2 py-1 rounded-md bg-amber-100 text-amber-700 border border-amber-200 mt-2">Backend non configuré</button>
+  </header>
+
+  <!-- Contenu principal (Cartes) -->
+  <main id="mainContent" class="max-w-4xl mx-auto p-4 space-y-8 hidden">
+    <!-- Section 2: Cartes de questions -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold flex items-center gap-2">
+          <!-- La marque est chargée dynamiquement par JS -->
+          <img id="markGrid" src="" alt="" class="h-5 w-5 rounded-md"> 
+          Choisissez un retour
+        </h2>
+        <button id="resetLocal" type="button" class="text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Vider mes réponses</button>
+      </div>
+      
+      <!-- Grille de cartes -->
+      <div id="cards">
+        <!-- Les cartes seront injectées ici par JS -->
+      </div>
+      
+      <div id="history" class="mt-6 text-xs text-[var(--text-secondary)]"></div>
+      <p class="mt-3 text-xs text-gray-400">Une pastille verte confirme qu’une réponse a bien été envoyée pour la carte.</p>
+    </section>
+  </main>
+
+  <!-- Notifications (Toasts) -->
+  <div id="toasts" aria-live="polite"></div>
+
+  <!-- Barre de progression flottante (permanente) -->
+  <div id="floatingProgressWrap" class="fixed bottom-0 left-0 right-0 p-4 hidden">
+    <div class="bubble max-w-4xl mx-auto rounded-xl p-3 shadow-lg">
+      <div class="flex items-center justify-between mb-1">
+        <p id="progressText" class="text-xs text-[var(--text-secondary)]" aria-live="polite">0/0 complétées</p>
+        <span id="progressPct" class="text-xs text-[var(--text-primary)] font-medium">0%</span>
+      </div>
+      <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+        <div id="progressBar" class="progressbar h-2" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale d'identification (principale) -->
+  <div id="profileModal" class="main-modal fixed inset-0 flex items-center justify-center p-4 z-50">
+    <div class="modal-backdrop fixed inset-0" aria-hidden="true"></div>
+    
+    <div class="relative w-full max-w-2xl rounded-2xl bubble shadow-xl overflow-hidden">
+      <form id="metaForm" novalidate>
+        <!-- En-tête Modale -->
+        <div class="flex items-start justify-between p-5 border-b border-gray-200/60">
+          <div>
+            <h3 class="text-lg font-semibold text-[var(--text-primary)] mt-0.5">Vos informations</h3>
+            <p class="text-sm text-[var(--text-secondary)]">Veuillez compléter votre profil pour commencer.</p>
+          </div>
+          <!-- Pas de bouton fermer au début -->
+          <button id="profileModalClose" type="button" class="hidden focus-ring rounded-full p-1 text-gray-400 hover:text-black" aria-label="Fermer">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        
+        <!-- Contenu Modale -->
+        <div class="p-5 space-y-6">
+          <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="studentCode" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Identifiant</label>
+              <input id="studentCode" name="studentCode" placeholder="ID_Exemple" class="mt-1 w-full rounded-xl bg-[var(--field)] border border-transparent px-3 py-2.5 focus-ring text-[var(--text-primary)]" required maxlength="32" inputmode="text" pattern="[A-Za-z0-9_\-]+">
+            </div>
+            <div>
+              <label id="cohortLabel" for="cohort" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Contexte</label>
+              <input id="cohort" name="cohort" placeholder="Ex : 3A, Startup X…" class="mt-1 w-full rounded-xl bg-[var(--field)] border border-transparent px-3 py-2.5 focus-ring text-[var(--text-primary)]" required>
+            </div>
+            <div>
+              <label for="profile" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Profil</label>
+              <select id="profile" name="profile" class="mt-1 w-full rounded-xl bg-[var(--field)] border border-transparent px-3 py-2.5 focus-ring text-[var(--text-primary)] appearance-none">
+                <option value="etudiant" selected>Étudiant</option>
+                <option value="entrepreneur">Entrepreneur</option>
+                <option value="freelance">Freelance</option>
+                <option value="enseignant">Enseignant</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+            <div>
+              <label for="used" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Usage</GIST_SECTION_END>
+              <select id="used" name="used" class="mt-1 w-full rounded-xl bg-[var(--field)] border border-transparent px-3 py-2.5 focus-ring text-[var(--text-primary)] appearance-none">
+                <option value="CHOPS_only">CHOPS (Framework seul)</option>
+                <option value="CHOPS_plus_CHOPi" selected>CHOPS + CHOPi (Outil)</option>
+                <option value="none">Aucun des deux</option>
+              </select>
+            </div>
+          </fieldset>
+          <fieldset class="space-y-2 pt-2">
+            <legend class="text-sm font-medium text-[var(--text-secondary)]">Consentement RGPD</legend>
+            <label class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-100/50 cursor-pointer">
+              <input id="consent" type="checkbox" class="mt-0.5 h-5 w-5 rounded text-[var(--primary)] focus-ring border-gray-300" required>
+              <span class="text-sm text-[var(--text-primary)]">J’accepte le stockage privé sur Drive et l’usage pédagogique. Vous pouvez demander la suppression à tout moment.</span>
+            </label>
+          </fieldset>
+        </div>
+
+        <!-- Pied de page Modale -->
+        <div class="p-4 bg-gray-50/70 border-t border-gray-200/60 flex justify-end">
+          <button id="btnStart" type="submit" class="focus-ring rounded-full btn-primary px-6 py-2.5 font-semibold disabled:opacity-50">
+            Commencer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modale d'enregistrement (Audio) -->
+  <div id="audioModal" class="fixed inset-0 bg-black/30 hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-labelledby="audioModalTitle">
+    <!-- Fond flouté pour la modale -->
+    <div class="fixed inset-0 bg-white/5 backdrop-blur-sm" aria-hidden="true"></div>
+    
+    <div class="relative w-full max-w-xl rounded-2xl bubble shadow-xl overflow-hidden">
+      <!-- Barre de progression de l'envoi -->
+      <div class="progressbar hidden h-1.5" id="sendProgress"></div>
+      
+      <!-- En-tête Modale -->
+      <div class="flex items-start justify-between p-4 border-b border-gray-200/60">
+        <div>
+          <p id="modalTheme" class="text-xs uppercase tracking-wide text-[var(--text-secondary)]"></p>
+          <h3 id="audioModalTitle" class="text-lg font-semibold text-[var(--text-primary)] mt-0.5"></h3>
+        </div>
+        <button id="audioModalClose" class="focus-ring rounded-full p-1 text-gray-400 hover:text-black" aria-label="Fermer">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      
+      <!-- Contenu Modale -->
+      <div class="p-5 space-y-4">
+        <p id="modalPrompt" class="text-sm text-[var(--text-secondary)]"></p>
+        
+        <!-- Outils d'enregistrement -->
+        <div class="flex items-center gap-3">
+          <!-- Bouton multi-état (Record / Pause / Resume) -->
+          <button id="btnRecord" type="button" class="focus-ring inline-flex items-center gap-2 rounded-full bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 font-medium disabled:opacity-50">
+            <svg class="svg-icon" id="btnRecordIcon"><use href="#icon-mic"/></svg>
+            <span id="btnRecordText">Enregistrer</span>
+          </button>
+          
+          <!-- Bouton Stop (apparaît pendant l'enregistrement/pause) -->
+          <button id="btnStop" type="button" class="focus-ring inline-flex items-center gap-2 rounded-full bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 font-medium disabled:opacity-50 hidden">
+            <svg class="svg-icon"><use href="#icon-stop"/></svg>
+            Stop
+          </button>
+          
+          <!-- Vumètre et Timer -->
+          <div class="flex-1 min-w-[120px]">
+            <div class="h-2 rounded-full bg-gray-200 overflow-hidden"><div id="meter" class="meter-bar h-2 bg-[var(--accent)] w-0"></div></div>
+            <p class="mt-1.5 text-xs text-[var(--text-secondary)]"><span id="timer">00:00</span> / 02:00</p>
+          </div>
+        </div>
+        
+        <!-- Prévisualisation et Réenregistrement -->
+        <div id="previewWrap" class="hidden space-y-3 pt-2">
+          <div class="flex items-center gap-3">
+            <audio id="player" controls class="w-full"></audio>
+            <button id="btnReRecord" type="button" class="focus-ring inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex-shrink-0">
+              <svg class="w-4 h-4"><use href="#icon-redo"/></svg>
+              Refaire
+            </button>
+          </div>
+          <p id="fileInfo" class="text-xs text-gray-400"></p>
+        </div>
+        
+        <!-- Zone de Transcription -->
+        <div id="transcriptionWrap" class="hidden pt-2">
+          <p class="text-xs font-medium text-[var(--text-secondary)] mb-1.5">Transcription (par IA)</p>
+          <div id="transcriptionBox" class="text-sm">
+            <span id="transcriptionText">Traitement de l'audio en cours...</span>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Pied de page Modale -->
+      <div class="p-4 bg-gray-50/70 border-t border-gray-200/60 flex items-center justify-between">
+        <p class="text-xs text-gray-500">État : <span id="status">Prêt</span></p>
+        <button id="btnSend" class="focus-ring rounded-full btn-primary px-6 py-2.5 font-semibold disabled:opacity-50" disabled>Envoyer cette réponse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code JavaScript principal -->
+  <script type="module">
+    // Fonctions utilitaires
+    const $ = (id) => document.getElementById(id);
+    
+    /**
+     * Affiche une notification (toast)
+     * @param {string} msg Le message à afficher
+     * @param {'info'|'ok'|'warn'|'err'} type Le type de toast
+     */
+    function toast(msg, type = 'info') {
+      const w = $('toasts');
+      const d = document.createElement('div');
+      let c = '';
+      switch (type) {
+        case 'ok': c = 'bg-green-100 border-green-300 text-green-800'; break;
+        case 'warn': c = 'bg-amber-100 border-amber-300 text-amber-800'; break;
+        case 'err': c = 'bg-red-100 border-red-300 text-red-800'; break;
+        default: c = 'bg-blue-100 border-blue-300 text-blue-800'; break;
+      }
+      d.className = `toast-msg w-full ${c} border rounded-xl px-4 py-3 mb-2 shadow-lg text-sm font-medium`;
+      d.textContent = msg;
+      w.appendChild(d);
+      setTimeout(() => {
+        d.style.transition = 'opacity 0.3s ease';
+        d.style.opacity = '0';
+        setTimeout(() => d.remove(), 300);
+      }, 3500);
+    }
+    
+    // Fonctions de gestion du stockage local
+    function keyFor(student) { return `chops_status_${student}`; }
+    function loadStatus(student) { try { return JSON.parse(localStorage.getItem(keyFor(student)) || '{}'); } catch (e) { console.error(e); return {}; } }
+    function saveStatus(student, status) { localStorage.setItem(keyFor(student), JSON.stringify(status)); }
+    function saveLastStudent(s) { localStorage.setItem('chops_last_student', s || ''); }
+    function getLastStudent() { return localStorage.getItem('chops_last_student') || ''; }
+    function saveMetaDataLocal(student, data) { localStorage.setItem('chops_meta_' + student, JSON.stringify(data)); }
+    function loadMetaDataLocal(student) {
+      const meta = localStorage.getItem('chops_meta_' + student);
+      if (meta) {
+        try { return JSON.parse(meta); } catch(e) { console.error(e); return null; }
+      }
+      return null;
+    }
+
+
+    // Initialisation au chargement du DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // --- Configuration dynamique de la marque ---
+      document.title = APP_CONFIG.BRAND_TITLE;
+      $('favicon').href = APP_CONFIG.BRAND_FAVICON_URL;
+      $('brandLogo').src = APP_CONFIG.BRAND_LOGO_URL;
+      $('brandTitle').textContent = APP_CONFIG.BRAND_TITLE;
+      $('markGrid').src = APP_CONFIG.BRAND_MARK_URL;
+      // -------------------------------------------
+
+      
+      // Badge de configuration backend
+      const backendConfigured = !!APP_CONFIG.WEBAPP_URL && !APP_CONFIG.WEBAPP_URL.startsWith('À_RENSEIGNER');
+      $('backendBadge').classList.toggle('hidden', backendConfigured);
+      if (!backendConfigured) {
+        $('backendBadge').addEventListener('click', () => {
+          toast('Renseignez APP_CONFIG.WEBAPP_URL dans le script.', 'warn');
+        });
+      }
+      
+      // Éléments du DOM
+      const mainContent = $('mainContent');
+      const profileModal = $('profileModal');
+      const profileModalClose = $('profileModalClose');
+      const metaForm = $('metaForm');
+      const btnStart = $('btnStart');
+      const btnEditProfile = $('btnEditProfile');
+      
+      const cardsWrap = $('cards');
+      const progressText = $('progressText');
+      const progressPct = $('progressPct');
+      const progressBar = $('progressBar');
+      const floatingBar = $('floatingProgressWrap');
+      const historyEl = $('history');
+      
+      // Liste des questions (topics)
+      const topics = ['declic', 'usage', 'clarte', 'equipe', 'CHOPi', 'reutilisation', 'libre'];
+      
+      const PROFILE_META = { 
+        etudiant: { label: 'Contexte (ex. Promo)', placeholder:'Ex : 3A, M1…' }, 
+        entrepreneur:{ label:'Organisation', placeholder:'Nom de l’entreprise/startup' }, 
+        freelance:{ label:'Domaine', placeholder:'Ex : design, dev, marketing…' }, 
+        enseignant:{ label:'Établissement / Matière', placeholder:'Ex : Lycée Z – NSI' }, 
+        autre:{ label:'Contexte', placeholder:'Ex : association, projet perso…' } 
+      };
+
+      let lastStudentCode = '';
+      
+      // Fonctions utilitaires
+      function getStudent() { return $('studentCode').value.trim(); }
+      function nowIso() { return new Date().toISOString(); }
+      function fmt(ts) { try { const d = new Date(ts); return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) { console.error(e); return ts; } }
+      
+      /**
+       * Affiche l'historique récent
+       * @param {object} status L'objet statut de l'étudiant
+       */
+      function historyList(status) {
+        const h = (status.__history || []).slice(-5).reverse();
+        if (!h.length) { historyEl.innerHTML = ''; return; }
+        historyEl.innerHTML = `
+          <div class="border border-[var(--card-border)] rounded-xl p-3 bg-white/30">
+            <div class="font-medium mb-2 text-[var(--text-primary)] text-xs">Historique récent</div>
+            <ul class="space-y-1">${h.map(x => 
+              `<li class=\"flex items-center justify-between\">
+                 <span class=\"text-[var(--text-secondary)] capitalize\">${x.topic}${x.ok === false ? ' (échec)' : ''}</span>
+                 <span class=\"text-gray-400\">${fmt(x.at)} · ${x.durationSec || 0}s</span>
+               </li>`
+            ).join('')}</ul>
+          </div>`;
+      }
+      
+      // Variable pour l'animation du compteur
+      let currentPct = 0;
+      
+      /**
+       * Met à jour l'affichage de la progression
+       * @param {object} status L'objet statut de l'étudiant
+       */
+      function updateProgress(status) {
+        const done = topics.filter(t => !!status[t]?.done).length;
+        const pct = topics.length ? Math.round(done * 100 / topics.length) : 0;
+        
+        progressText.textContent = `${done}/${topics.length} complétées`;
+        progressBar.style.width = `${pct}%`;
+
+        // Animation du compteur de pourcentage
+        const startPct = currentPct;
+        const diff = pct - startPct;
+        if (diff === 0) {
+          progressPct.textContent = `${pct}%`;
+          return;
+        }
+
+        const duration = 400; // ms
+        let startTime = null;
+
+        function animatePct(timestamp) {
+          if (!startTime) startTime = timestamp;
+          const elapsed = timestamp - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const animatedVal = Math.floor(startPct + diff * progress);
+          
+          progressPct.textContent = `${animatedVal}%`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animatePct);
+          } else {
+            progressPct.textContent = `${pct}%`;
+            currentPct = pct; // Met à jour le % actuel
+          }
+        }
+        requestAnimationFrame(animatePct);
+      }
+      
+      /**
+       * Vérifie si le formulaire est prêt pour afficher les cartes
+       * @returns {boolean}
+       */
+      function validateProfileForm() {
+        const idOk = /^[A-Za-z0-9_\-]{1,32}$/.test($('studentCode').value.trim());
+        const consentOk = $('consent').checked;
+        const ctxOk = ($('cohort').value || '').trim().length > 0;
+        
+        if (!idOk) toast('Veuillez entrer un identifiant valide.', 'warn');
+        else if (!ctxOk) toast('Veuillez entrer votre contexte.', 'warn');
+        else if (!consentOk) toast('Veuillez accepter le consentement.', 'warn');
+        
+        return idOk && consentOk && ctxOk;
+      }
+      
+      /**
+       * Récupère la question spécifique pour un profil et un sujet
+       * @param {string} profile Le profil sélectionné
+       * @param {string} topic Le sujet de la carte
+       * @returns {string} La question formatée
+       */
+      function getQuestion(profile, topic) {
+        try {
+          if (APP_CONFIG.PROFILE_QUESTIONS[profile] && APP_CONFIG.PROFILE_QUESTIONS[profile][topic]) {
+            return APP_CONFIG.PROFILE_QUESTIONS[profile][topic];
+          }
+          // Fallback sur le profil "autre"
+          return APP_CONFIG.PROFILE_QUESTIONS['autre'][topic] || "Question non définie";
+        } catch (e) {
+          console.error("Erreur lors de la récupération de la question", e);
+          return "Erreur de configuration de la question.";
+        }
+      }
+
+      /**
+       * Affiche les cartes de questions
+       */
+      function renderCards() {
+        const student = getStudent();
+        if (!student) return; // Ne pas rendre si pas d'étudiant
+        
+        const status = loadStatus(student);
+        cardsWrap.innerHTML = '';
+        
+        const profile = $('profile').value; // Profil actuel
+
+        topics.forEach(t => {
+          const entry = status[t];
+          const done = !!entry?.done;
+          const ts = entry?.at ? fmt(entry.at) : '';
+          const dur = entry?.durationSec ? ` · ${entry.durationSec}s` : '';
+          
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.dataset.topic = t;
+          card.className = `grid-card bubble group w-full text-left rounded-2xl p-4 transition ${
+            done ? 'border-[var(--accent)] bg-green-50/50' : 'border-transparent'
+          } cursor-pointer hover:shadow-md`;
+          
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <!-- La marque est chargée dynamiquement par JS -->
+                  <img src="${APP_CONFIG.BRAND_MARK_URL}" alt="" class="h-4 w-4 rounded">
+                  <span class="font-medium capitalize text-[var(--text-primary)]">${t}</span>
+                </div>
+                <p class="text-sm mt-1.5 text-[var(--text-secondary)]">${getQuestion(profile, t)}</p>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full ${done? 'bg-[var(--accent)] text-black font-medium' : 'bg-gray-200 text-gray-600'}">${done? 'Répondu' : 'À faire'}</span>
+            </div>
+            ${ts ? `<p class=\"mt-2 text-xs text-gray-400\">Envoi : ${ts}${dur}</p>` : ''}`;
+            
+          card.addEventListener('click', () => {
+            openAudioModal(t, card);
+          });
+          cardsWrap.appendChild(card);
+        });
+        
+        updateProgress(status);
+        historyList(status);
+      }
+      
+      /**
+       * Gère la soumission du formulaire de profil
+       */
+      function handleProfileSubmit(e) {
+        if (e) e.preventDefault();
+        if (!validateProfileForm()) return;
+        
+        const currentStudent = getStudent();
+        
+        // Sauvegarder les métadonnées
+        const meta = {
+          cohort: $('cohort').value,
+          used: $('used').value,
+          profile: $('profile').value
+        };
+        saveMetaDataLocal(currentStudent, meta);
+        
+        // Gérer le changement d'étudiant
+        if (lastStudentCode && currentStudent !== lastStudentCode) {
+          toast(`Profil changé : ${lastStudentCode} → ${currentStudent}`, 'warn');
+        }
+        lastStudentCode = currentStudent;
+        saveLastStudent(currentStudent);
+        
+        // Afficher l'interface principale
+        profileModal.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        floatingBar.classList.remove('hidden');
+        btnEditProfile.classList.remove('hidden');
+        profileModalClose.classList.remove('hidden');
+        
+        // Rendre les cartes
+        renderCards();
+      }
+      
+      metaForm.addEventListener('submit', handleProfileSubmit);
+
+      // Gérer l'ouverture/fermeture de la modale de profil
+      btnEditProfile.addEventListener('click', () => {
+        profileModal.classList.remove('hidden');
+      });
+      profileModalClose.addEventListener('click', () => {
+        profileModal.classList.add('hidden');
+      });
+
+      // Écouteurs d'événements sur le formulaire
+      $('profile').addEventListener('change', () => {
+        const meta = PROFILE_META[$('profile').value];
+        if (meta) {
+          $('cohortLabel').textContent = meta.label;
+          $('cohort').placeholder = meta.placeholder;
+        }
+        // Pas besoin de renderCards() ici, on attend la soumission
+      });
+      
+      $('resetLocal').addEventListener('click', () => {
+        const s = getStudent();
+        if (!s) { toast('Identifiant requis', 'warn'); return; }
+        localStorage.removeItem(keyFor(s));
+        renderCards();
+        toast('Réponses locales vidées', 'ok');
+      });
+      
+      // --- Chargement initial ---
+      function initializeApp() {
+        const last = getLastStudent();
+        if (last) { 
+          $('studentCode').value = last; 
+          const meta = loadMetaDataLocal(last);
+          if(meta){
+            if (meta.cohort) $('cohort').value = meta.cohort;
+            if (meta.used) $('used').value = meta.used;
+            if (meta.profile) $('profile').value = meta.profile;
+            // Mettre à jour le placeholder
+            const profileMeta = PROFILE_META[meta.profile];
+            if (profileMeta) {
+              $('cohortLabel').textContent = profileMeta.label;
+              $('cohort').placeholder = profileMeta.placeholder;
+            }
+          }
+          
+          // Si on a un étudiant et des méta, on pourrait valider 
+          // et sauter la modale, mais il manque le consentement.
+          // On laisse la modale s'afficher, pré-remplie.
+          profileModal.classList.remove('hidden');
+          
+        } else {
+          // Nouvel utilisateur, afficher la modale
+          profileModal.classList.remove('hidden');
+        }
+      }
+      
+      initializeApp();
+
+
+      // --- Gestion de la Modale Audio ---
+      const audioModal = $('audioModal');
+      const modalTitle = $('audioModalTitle');
+      const modalTheme = $('modalTheme');
+      const modalPrompt = $('modalPrompt');
+      const audioModalClose = $('audioModalClose');
+      const sendProgress = $('sendProgress');
+      
+      // Transcription
+      const transcriptionWrap = $('transcriptionWrap');
+      const transcriptionText = $('transcriptionText');
+
+      let currentTopic = null;
+      let lastTrigger = null;
+      let sending = false;
+
+      function openAudioModal(topic, trigger) {
+        if (sending) { toast('Envoi en cours…', 'warn'); return; }
+        
+        currentTopic = topic;
+        lastTrigger = trigger || null;
+        modalTheme.textContent = topic.toUpperCase();
+        
+        const profile = $('profile').value;
+        modalTitle.textContent = getQuestion(profile, topic); 
+        
+        modalPrompt.textContent = 'Répondez en 30–90 s.';
+        resetRecording(true);
+        transcriptionWrap.classList.add('hidden'); // Cacher la transcription
+        transcriptionText.textContent = '...';
+        
+        audioModal.classList.remove('hidden');
+        audioModal.classList.add('flex');
+        $('btnRecord').focus();
+        trapEnable(audioModal); // Activer le trap sur la modale audio
+      }
+
+      function closeAudioModal() {
+        audioModal.classList.add('hidden');
+        audioModal.classList.remove('flex');
+        trapDisable(); // Désactiver le trap
+        if (lastTrigger) { lastTrigger.focus(); }
+      }
+      
+      audioModalClose.addEventListener('click', closeAudioModal);
+      audioModal.addEventListener('click', (e) => { if (e.target === e.currentTarget.children[0]) closeAudioModal(); }); // Clic sur le fond flouté
+      document.addEventListener('keydown', (e) => { if (!audioModal.classList.contains('hidden') && e.key === 'Escape') { closeAudioModal(); } });
+
+      // Gestion du "focus trap" pour l'accessibilité
+      let trapHandler = null;
+      function trapEnable(modalElement) {
+        trapHandler = (e) => {
+          if (modalElement.classList.contains('hidden')) return;
+          const focusable = modalElement.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), audio');
+          if (focusable.length === 0) return;
+          const first = focusable[0], last = focusable[focusable.length - 1];
+          if (e.key === 'Tab') {
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } 
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+          }
+        };
+        document.addEventListener('keydown', trapHandler, true);
+      }
+      function trapDisable() {
+        if (trapHandler) {
+          document.removeEventListener('keydown', trapHandler, true);
+          trapHandler = null;
+        }
+      }
+
+      // --- Gestion de l'enregistrement audio ---
+      let mediaStream, mediaRecorder, audioChunks = [];
+      let audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
+      let startedAt = 0, currentDuration = 0, timerInterval = null; // currentDuration pour la pause
+      let audioContext, analyser, dataArray;
+      let recordingState = 'idle'; // 'idle', 'recording', 'paused'
+
+      const statusEl = $('status');
+      const btnRecord = $('btnRecord');
+      const btnRecordText = $('btnRecordText');
+      const btnRecordIcon = $('btnRecordIcon');
+      const btnStop = $('btnStop');
+      const btnSend = $('btnSend');
+      const btnReRecord = $('btnReRecord');
+      const meterBar = $('meter');
+      const timerEl = $('timer');
+      const player = $('player');
+      const previewWrap = $('previewWrap');
+      const fileInfo = $('fileInfo');
+
+      function setStatus(t) { statusEl.textContent = t; }
+      function hhmmss(s) { return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`; }
+      function canSend() { return $('consent').checked && !!audioBlob; }
+      function updateSendState() { btnSend.disabled = !canSend(); }
+      
+      // Gestionnaire de clic principal pour l'enregistrement/pause/reprise
+      btnRecord.addEventListener('click', () => {
+        if (recordingState === 'idle') {
+          startRecording();
+        } else if (recordingState === 'recording') {
+          pauseRecording();
+        } else if (recordingState === 'paused') {
+          resumeRecording();
+        }
+      });
+      
+      btnStop.addEventListener('click', () => stopRecording(false));
+      btnReRecord.addEventListener('click', () => { resetRecording(true); });
+      btnSend.addEventListener('click', submitOne);
+      
+      // --- Nouvelles fonctions pour le timer ---
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+      
+      function startTimer() {
+        stopTimer(); // Assure qu'un seul timer tourne
+        startedAt = Date.now(); // Référence pour ce segment de temps
+        
+        timerInterval = setInterval(() => {
+          // Calcule le temps total écoulé (segments précédents + segment actuel)
+          const elapsed = (Date.now() - startedAt) / 1000;
+          const totalSeconds = currentDuration + elapsed;
+          
+          if (totalSeconds >= APP_CONFIG.LIMITS.MAX_SECONDS) {
+            timerEl.textContent = hhmmss(APP_CONFIG.LIMITS.MAX_SECONDS);
+            stopRecording(true); // Arrêt auto
+            return;
+          }
+          
+          timerEl.textContent = hhmmss(totalSeconds);
+          
+          // Vumètre
+          if(analyser) {
+              analyser.getByteTimeDomainData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) {
+                  const v = (dataArray[i] - 128) / 128;
+                  sum += v * v;
+              }
+              const rms = Math.sqrt(sum / dataArray.length);
+              meterBar.style.width = Math.min(100, Math.floor(rms * 180)) + "%";
+          }
+        }, 80);
+      }
+      // -----------------------------------------
+
+      async function startRecording() {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (err) {
+          console.error(err);
+          toast('Accès au microphone refusé.', 'err');
+          setStatus('Micro refusé');
+          return;
+        }
+        
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            audioContext.createMediaStreamSource(mediaStream).connect(analyser);
+        } catch (e) { console.error("Erreur AudioContext:", e); }
+
+        const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+        mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm';
+        
+        try {
+            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+        } catch (e) {
+            console.error("Erreur MediaRecorder:", e);
+            toast('Erreur enregistreur audio.', 'err');
+            return;
+        }
+
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) audioChunks.push(e.data); };
+        
+        mediaRecorder.onstart = () => {
+          // Ne pas démarrer le timer ici, startTimer() est appelé après
+        };
+        
+        mediaRecorder.onstop = () => {
+          stopTimer(); // Arrête le timer
+          
+          // Mettre à jour la durée finale
+          currentDuration += (Date.now() - startedAt) / 1000;
+          timerEl.textContent = hhmmss(Math.min(currentDuration, APP_CONFIG.LIMITS.MAX_SECONDS));
+          
+          meterBar.style.width = '0%';
+          if (audioChunks.length === 0) {
+            console.warn("Aucune donnée audio capturée.");
+            toast("Problème d'enregistrement, aucune donnée capturée.", "err");
+            resetRecording(true);
+            return;
+          }
+          
+          audioBlob = new Blob(audioChunks, { type: mimeType });
+          if (audioBlob.size > APP_CONFIG.LIMITS.MAX_BYTES) {
+            toast(`Fichier audio trop volumineux (> ${APP_CONFIG.LIMITS.MAX_BYTES / 1024 / 1024} Mo).`, 'warn');
+            resetRecording(true);
+            return;
+          }
+          
+          audioUrl = URL.createObjectURL(audioBlob);
+          player.src = audioUrl;
+          previewWrap.classList.remove('hidden');
+          fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée ~ ${timerEl.textContent}`;
+          setStatus('Prêt à l’envoi');
+          updateSendState();
+          
+          // Mettre à jour l'état des boutons
+          btnRecord.classList.remove('hidden');
+          btnRecord.disabled = false;
+          btnStop.classList.add('hidden');
+          btnStop.disabled = true;
+          btnReRecord.classList.remove('hidden');
+          
+          mediaStream.getTracks().forEach(t => t.stop());
+          audioContext?.close().catch(e => console.error(e));
+          
+          // Lancer la transcription
+          transcribeAudio();
+        };
+        
+        // Démarrage effectif
+        mediaRecorder.start();
+        recordingState = 'recording';
+        setStatus('Enregistrement en cours…');
+        toast('Enregistrement en cours…');
+        
+        // Mettre à jour l'état des boutons
+        btnRecordText.textContent = 'Pause';
+        btnRecordIcon.innerHTML = '<use href="#icon-pause"/>';
+        btnRecord.classList.remove('bg-red-500', 'hover:bg-red-600');
+        btnRecord.classList.add('bg-amber-500', 'hover:bg-amber-600');
+        
+        btnStop.disabled = false;
+        btnStop.classList.remove('hidden');
+        btnReRecord.classList.add('hidden');
+        previewWrap.classList.add('hidden'); // Cacher la prévisualisation
+        transcriptionWrap.classList.add('hidden'); // Cacher la transcription
+        
+        currentDuration = 0; // Reset la durée pour ce nouvel enregistrement
+        startTimer(); // Démarrer le timer
+      }
+      
+      function pauseRecording() {
+        if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+        
+        mediaRecorder.pause();
+        recordingState = 'paused';
+        stopTimer(); // Arrête le timer
+        
+        // Enregistre le temps écoulé jusqu'à présent
+        currentDuration += (Date.now() - startedAt) / 1000;
+        
+        setStatus('En pause');
+        
+        // Mettre à jour l'état des boutons
+        btnRecordText.textContent = 'Reprendre';
+        btnRecordIcon.innerHTML = '<use href="#icon-resume"/>';
+        btnRecord.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+        btnRecord.classList.add('bg-green-500', 'hover:bg-green-600');
+      }
+      
+      function resumeRecording() {
+        if (!mediaRecorder || mediaRecorder.state !== 'paused') return;
+        
+        mediaRecorder.resume();
+        recordingState = 'recording';
+        startTimer(); // Redémarre le timer (startedAt est réinitialisé)
+        
+        setStatus('Enregistrement en cours…');
+        
+        // Mettre à jour l'état des boutons
+        btnRecordText.textContent = 'Pause';
+        btnRecordIcon.innerHTML = '<use href="#icon-pause"/>';
+        btnRecord.classList.remove('bg-green-500', 'hover:bg-green-600');
+        btnRecord.classList.add('bg-amber-500', 'hover:bg-amber-600');
+      }
+
+      function stopRecording(auto = false) {
+        if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
+          mediaRecorder.stop(); // .onstop() sera appelé et gérera le reste
+          recordingState = 'idle';
+          
+          if (auto) {
+            toast('Arrêt automatique (120 s).', 'warn');
+            setStatus('Arrêt automatique (120 s)');
+          } else {
+            toast('Enregistrement arrêté.');
+          }
+          
+          // Réinitialiser le bouton principal
+          btnRecordText.textContent = 'Enregistrer';
+          btnRecordIcon.innerHTML = '<use href="#icon-mic"/>';
+          btnRecord.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-green-500', 'hover:bg-green-600');
+          btnRecord.classList.add('bg-red-500', 'hover:bg-red-600');
+        }
+      }
+
+      function resetRecording(inModal = false) {
+        // Arrêter tout enregistrement en cours
+        if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            mediaRecorder = null;
+        }
+        
+        try { audioContext?.close().catch(e => console.error(e)); } catch (e) { console.error(e); }
+        
+        stopTimer(); // Arrêter le timer
+        recordingState = 'idle';
+        currentDuration = 0;
+        audioChunks = [];
+        audioBlob = null;
+        if (audioUrl) {
+          try { URL.revokeObjectURL(audioUrl); } catch (e) { console.error(e); }
+        }
+        audioUrl = null;
+        
+        if (inModal) {
+          previewWrap.classList.add('hidden');
+          transcriptionWrap.classList.add('hidden');
+          timerEl.textContent = '00:00';
+          
+          // Réinitialiser le bouton principal
+          btnRecord.disabled = false;
+          btnRecord.classList.remove('hidden');
+          btnRecordText.textContent = 'Enregistrer';
+          btnRecordIcon.innerHTML = '<use href="#icon-mic"/>';
+          btnRecord.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-green-500', 'hover:bg-green-600');
+          btnRecord.classList.add('bg-red-500', 'hover:bg-red-600');
+          
+          btnStop.classList.add('hidden');
+          btnStop.disabled = true;
+          btnReRecord.classList.add('hidden');
+          setStatus('Prêt');
+          updateSendState();
+        }
+      }
+      
+      /**
+       * Convertit un Blob en base64
+       * @param {Blob} blob Le blob à convertir
+       * @returns {Promise<string>} La chaîne base64 (sans le préfixe data:)
+       */
+      function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onloadend = () => {
+            if (typeof r.result !== 'string') {
+              return reject(new Error("FileReader did not return a string."));
+            }
+            const parts = r.result.split(',');
+            if (parts.length < 2) {
+              return reject(new Error("Invalid base64 string format."));
+            }
+            resolve(parts[1]); // Renvoie uniquement la partie base64
+          };
+          r.onerror = reject;
+          r.readAsDataURL(blob);
+        });
+      }
+
+      /**
+       * Appelle le backend (Apps Script) pour la transcription
+       */
+      async function transcribeAudio() {
+        if (!audioBlob) {
+          toast("Aucun audio à transcrire.", "warn");
+          return;
+        }
+
+        if (!backendConfigured) {
+          toast("Backend non configuré pour la transcription.", "err");
+          transcriptionText.textContent = "Erreur: Backend non configuré.";
+          return;
+        }
+        
+        transcriptionWrap.classList.remove('hidden');
+        transcriptionText.textContent = "Transcription en cours...";
+        setStatus('Transcription...');
+
+        let base64Audio;
+        try {
+          base64Audio = await blobToBase64(audioBlob);
+        } catch (e) {
+          console.error("Erreur conversion base64:", e);
+          toast("Erreur interne (base64).", "err");
+          transcriptionText.textContent = "Erreur de conversion audio.";
+          return;
+        }
+
+        // Payload pour l'action "transcribe" de votre backend
+        const payload = {
+          action: "transcribe",
+          mimeType: audioBlob.type || 'audio/webm',
+          fileBase64: base64Audio
+        };
+        
+        const apiUrl = APP_CONFIG.WEBAPP_URL; // Votre URL Apps Script
+
+        try {
+          const response = await fetchWithRetry(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          const result = await response.json();
+          
+          if (result.ok === true && result.transcription) {
+            transcriptionText.textContent = result.transcription;
+            setStatus('Prêt à l’envoi');
+          } else {
+            throw new Error(result.error || "Réponse de transcription invalide.");
+          }
+        } catch (err) {
+          console.error('Erreur backend (transcription):', err);
+          toast(`Erreur de transcription: ${err.message}`, "err");
+          transcriptionText.textContent = "La transcription a échoué.";
+          setStatus('Erreur transcription');
+        }
+      }
+
+      /**
+       * Fonction fetch avec tentatives
+       * @param {string} url
+       * @param {object} init
+       * @param {number} tries
+       * @returns {Promise<Response>}
+       */
+      async function fetchWithRetry(url, init, tries = 2) {
+        let lastErr;
+        for (let i = 0; i < tries; i++) {
+          try {
+            const res = await fetch(url, init);
+            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+            return res;
+          } catch (e) {
+            lastErr = e;
+            if (i < tries - 1) await new Promise(r => setTimeout(r, 800)); // Attente avant ré-essai
+          }
+        }
+        throw lastErr;
+      }
+
+      /**
+       * Soumet la réponse audio
+       */
+      async function submitOne() {
+        if (sending) return;
+        sending = true;
+
+        if (!backendConfigured) {
+          toast('Le backend (WEBAPP_URL) n\'est pas configuré.', 'err');
+          sending = false;
+          return;
+        }
+        if (!canSend()) {
+          toast('Veuillez enregistrer un audio et cocher le consentement.', 'warn');
+          sending = false;
+          return;
+        }
+
+        const studentCode = getStudent();
+        const meta = loadMetaDataLocal(studentCode) || {}; // Recharger les métadonnées
+        
+        const [mm, ss] = $('timer').textContent.split(':').map(Number);
+        const durationSec = (mm * 60 + ss) || 0;
+        const sizeKB = audioBlob ? Math.round(audioBlob.size / 1024) : 0;
+        
+        setStatus('Préparation…');
+        btnSend.disabled = true;
+        btnRecord.disabled = true;
+        btnStop.disabled = true;
+        btnReRecord.disabled = true;
+        
+        toast(`Transfert en cours… ~${sizeKB} KB`);
+        sendProgress.classList.remove('hidden');
+        sendProgress.style.width = '20%';
+
+        let base64;
+        try {
+          base64 = await blobToBase64(audioBlob);
+        } catch (e) {
+          console.error(e);
+          toast("Erreur de préparation du fichier.", "err");
+          setStatus('Erreur');
+          sending = false;
+          btnSend.disabled = false;
+          btnRecord.disabled = false;
+          btnReRecord.disabled = false;
+          sendProgress.classList.add('hidden');
+          return;
+        }
+        
+        const payload = {
+          action: "uploadAudio", // Action par défaut pour l'envoi
+          consent: true,
+          studentCode,
+          cohort: meta.cohort,
+          used: meta.used,
+          profile: meta.profile,
+          topic: currentTopic,
+          durationSec,
+          mimeType,
+          fileBase64: base64,
+          transcription: transcriptionText.textContent, // Ajout de la transcription
+          clientUA: navigator.userAgent
+        };
+
+        try {
+          sendProgress.style.width = '55%';
+          const t0 = Date.now();
+          
+          const res = await fetchWithRetry(APP_CONFIG.WEBAPP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          sendProgress.style.width = '85%';
+          const json = await res.json().catch(() => ({}));
+          if (json.ok === false) throw new Error(json.error || 'Erreur inconnue du serveur');
+          
+          const tMs = Date.now() - t0;
+          setStatus('Terminé ✅');
+          toast(`Réponse envoyée ! (${Math.round(tMs / 1000)}s)`, 'ok');
+          
+          const st = loadStatus(studentCode);
+          st[topic] = { done: true, at: nowIso(), durationSec, audioUrl: json?.files?.audio || null };
+          st.__history = (st.__history || []).concat([{ topic, at: nowIso(), durationSec, ok: true }]).slice(-20);
+          saveStatus(studentCode, st);
+          
+          renderCards();
+          closeAudioModal();
+          
+        } catch (err) {
+          console.error(err);
+          setStatus('Erreur d’envoi');
+          toast(`Erreur : ${String(err.message || err)}`, 'err');
+          
+          const st = loadStatus(studentCode);
+          st.__history = (st.__history || []).concat([{ topic, at: nowIso(), durationSec, ok: false }]).slice(-20);
+          saveStatus(studentCode, st);
+          
+          renderCards();
+          btnSend.disabled = false;
+          btnRecord.disabled = false;
+          btnReRecord.disabled = false;
+          
+        } finally {
+          sendProgress.style.width = '100%';
+          setTimeout(() => {
+            sendProgress.classList.add('hidden');
+            sendProgress.style.width = '0%';
+            sending = false;
+            // Ré-activer les boutons si l'état n'est pas "Terminé"
+            if (statusEl.textContent !== 'Terminé ✅') {
+                btnSend.disabled = !canSend();
+                btnRecord.disabled = false;
+                btnReRecord.disabled = !!audioBlob;
+            }
+          }, 500);
+        }
+      }
+
+      // Fonction d'export (cachée)
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') {
+          const student = getStudent();
+          if (!student) { toast('Identifiant requis', 'warn'); return; }
+          
+          const status = loadStatus(student);
+          const payload = { action: APP_CONFIG.EXPORT.action, studentCode: student, status, at: new Date().toISOString() };
+          
+          if (backendConfigured) {
+            fetch(APP_CONFIG.WEBAPP_URL, { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify(payload) 
+            })
+            .then(r => r.json())
+            .then(() => toast('État exporté vers le backend', 'ok'))
+            .catch((e) => toast('Export backend impossible', 'err'));
+          }
+          
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const ts = new Date().toISOString().replace(/[:.]/g, '-');
+          a.href = url;
+          a.download = `chops_progress_${student}_${ts}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          toast('État téléchargé localement', 'ok');
+        }
+      });
+      
+    });
+  </script>
+</body>
+</html>
