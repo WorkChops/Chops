@@ -919,12 +919,20 @@
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
             const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
             timerEl.textContent = hhmmss(sec);
-            if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
+
+            if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
+              stopRecording();
+              toast('Temps maximum (2 min) atteint.', 'warn');
+            }
+
             analyser.getByteTimeDomainData(dataArray);
             let sum = 0;
-            for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
-            const rms=Math.sqrt(sum/dataArray.length);
-            meterBar.style.width=Math.min(100,Math.floor(rms*180))+"%";
+            for (let i = 0; i < dataArray.length; i++) {
+              const v = (dataArray[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.sqrt(sum / dataArray.length);
+            meterBar.style.width = Math.min(100, Math.floor(rms * 180)) + "%";
           }, 80);
         }
       }
