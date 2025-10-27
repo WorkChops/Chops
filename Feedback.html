@@ -280,7 +280,7 @@
         </fieldset>
 
         <div class="text-right pt-2">
-          <button id="saveProfileBtn" type="button" class="btn btn-primary">Valider et commencer</button>
+          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
         </div>
       </form>
     </div>
@@ -517,7 +517,8 @@
       /**
        * Gère la soumission du formulaire de profil.
        */
-      saveProfileBtn.addEventListener('click', () => {
+      metaForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         const studentCode = $('#studentCode').value.trim();
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
@@ -723,6 +724,12 @@
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
+        if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
+          const userConfirmed = confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?");
+          if (!userConfirmed) {
+            return; // L'utilisateur a annulé, on ne ferme pas la modale
+          }
+        }
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
@@ -918,20 +925,12 @@
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
             const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
             timerEl.textContent = hhmmss(sec);
-
-            if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
-              stopRecording();
-              toast('Temps maximum (2 min) atteint.', 'warn');
-            }
-
+            if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
             analyser.getByteTimeDomainData(dataArray);
             let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              const v = (dataArray[i] - 128) / 128;
-              sum += v * v;
-            }
-            const rms = Math.sqrt(sum / dataArray.length);
-            meterBar.style.width = Math.min(100, Math.floor(rms * 180)) + "%";
+            for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
+            const rms=Math.sqrt(sum/dataArray.length);
+            meterBar.style.width=Math.min(100,Math.floor(rms*180))+"%";
           }, 80);
         }
       }
