@@ -186,45 +186,34 @@
     /* Masqué */
     .hidden { display: none; }
 
-    /* CORRECTION MOBILE: Ajustements pour la modale */
-    /* Centrer sur les grands écrans */
-    @media (min-width: 640px) {
-      #profileModal {
-        align-items: center; /* Centrer verticalement sur sm+ */
-      }
-    }
-    /* Aligner en haut sur les petits écrans */
+    /* CORRECTION MOBILE: Simplification de la modale */
     #profileModal {
-        align-items: flex-start; /* Aligner en haut par défaut */
-        padding-top: 1rem; /* Moins d'espace en haut */
+        /* Garder l'alignement en haut sur mobile, centré sur desktop */
+        align-items: flex-start;
+        padding-top: 1rem;
         padding-bottom: 1rem;
     }
+    @media (min-width: 640px) {
+      #profileModal {
+        align-items: center;
+      }
+    }
     #profileModal .glass-bubble {
-        display: flex; /* Utiliser flex pour séparer le contenu et le bouton fixe */
-        flex-direction: column;
-        overflow: hidden; /* Empêcher le débordement global */
-        max-height: 90vh; /* Augmenter légèrement la hauteur max */
+        overflow-y: auto; /* Permettre le défilement de TOUTE la modale si besoin */
+        max-height: 90vh; /* Limiter la hauteur */
+        /* Retrait de display:flex et flex-direction:column */
     }
     #profileModal form {
-        overflow-y: auto; /* Permettre le défilement SEULEMENT pour le formulaire */
-        padding-bottom: 70px; /* Espace pour le bouton fixe */
-        flex-grow: 1; /* Prendre l'espace disponible */
+        overflow-y: visible; /* Le formulaire ne scrolle plus lui-même */
+        padding-bottom: 0; /* Plus besoin d'espace pour le bouton fixe */
+        flex-grow: 0; /* Taille normale */
     }
-    /* Style pour le conteneur du bouton fixe en bas */
-    .modal-footer-sticky {
-        position: sticky; /* ou absolute si le parent est relative */
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 1rem 1.5rem; /* Correspondre au padding de la modale */
-        background: rgba(255, 255, 255, 0.6); /* Fond semi-transparent pour le pied */
-        backdrop-filter: blur(10px);
-         -webkit-backdrop-filter: blur(10px);
-        border-top: 1px solid var(--card-border);
-        margin: 0 -1.5rem -1rem; /* Compenser le padding parent pour aller bord à bord */
-        border-bottom-left-radius: 1rem; /* Arrondir les coins */
-        border-bottom-right-radius: 1rem;
+    /* Style pour le conteneur du bouton à la fin du formulaire */
+    .modal-footer {
+       padding-top: 1rem; /* Espace au-dessus du bouton */
+       text-align: right;
     }
+    /* Suppression des styles .modal-footer-sticky */
 
   </style>
 </head>
@@ -273,20 +262,15 @@
   <!-- =================================================================================== -->
 
   <!-- Modale de Profil (Affichée au chargement) -->
-  <!-- CORRECTION MOBILE: Ajout de pt-4 pb-4 et items-start -->
   <div id="profileModal" class="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 pt-4 pb-4" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
-    <!-- CORRECTION MOBILE: Structure flex + overflow + max-h -->
-    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
-      <!-- En-tête de la modale -->
-       <div class="p-6 sm:p-8 pb-4 border-b border-white/50">
-           <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900">Vos informations</h2>
-           <p class="text-sm text-gray-600 mt-1">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
-       </div>
+    <!-- CORRECTION MOBILE: Simplification - overflow et max-h sur le conteneur principal -->
+    <div class="glass-bubble relative w-full max-w-2xl rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900 mb-2">Vos informations</h2>
+      <p class="text-sm text-gray-600 mb-6">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
       
-      <!-- Formulaire avec défilement interne -->
-      <form id="metaForm" class="space-y-5 p-6 sm:p-8 overflow-y-auto flex-grow" novalidate>
+      <form id="metaForm" class="space-y-5" novalidate>
         <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="studentCode" class="block text-sm font-medium">Identifiant</label>
@@ -325,14 +309,12 @@
             <span class="text-sm text-gray-700">J’accepte le stockage privé sur Google Drive (audio + transcription) et l’usage pédagogique/anonymisé de ces données. Vous pouvez demander la suppression à tout moment.</span>
           </label>
         </fieldset>
-         <!-- Espace ajouté pour ne pas coller au bouton fixe -->
-         <div class="h-4"></div>
-      </form>
 
-       <!-- Pied de modale fixe -->
-       <div class="modal-footer-sticky text-right">
-            <button id="saveProfileBtn" type="submit" form="metaForm" class="btn btn-primary">Valider et commencer</button>
+        <!-- CORRECTION MOBILE: Bouton à la fin du formulaire, dans la zone scrollable -->
+        <div class="modal-footer">
+            <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
         </div>
+      </form>
     </div>
   </div>
 
@@ -431,6 +413,7 @@
      */
     function toast(msg, type = 'info') {
       const w = $('#toasts');
+      if (!w) return; // Sécurité si l'élément n'existe pas
       const d = document.createElement('div');
       let c = 'bg-gray-700'; // info
       if (type === 'ok') c = 'bg-green-600';
@@ -442,15 +425,17 @@
       w.appendChild(d);
       
       // Animation d'apparition
-      setTimeout(() => {
-        d.classList.remove('translate-x-full', 'opacity-0');
-        d.classList.add('translate-x-0', 'opacity-100');
-      }, 10);
+      requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+              d.classList.remove('translate-x-full', 'opacity-0');
+              d.classList.add('translate-x-0', 'opacity-100');
+          });
+      });
 
       // Animation de disparition
       setTimeout(() => {
         d.classList.add('translate-x-full', 'opacity-0');
-        d.addEventListener('transitionend', () => d.remove());
+        d.addEventListener('transitionend', () => d.remove(), { once: true }); // Assurer suppression unique
       }, 3500);
     }
 
@@ -465,7 +450,12 @@
 
     /** Enregistre les métadonnées de profil */
     function saveMeta(meta) {
-      localStorage.setItem(LS_KEYS.META, JSON.stringify(meta));
+      try {
+        localStorage.setItem(LS_KEYS.META, JSON.stringify(meta));
+      } catch (e) {
+        console.error("Erreur sauvegarde localStorage (meta):", e);
+        toast("Impossible de sauvegarder le profil.", "err");
+      }
     }
     
     /** Charge les métadonnées de profil */
@@ -473,6 +463,7 @@
       try {
         return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}');
       } catch (e) {
+         console.error("Erreur chargement localStorage (meta):", e);
         return {};
       }
     }
@@ -480,7 +471,12 @@
     /** Enregistre le statut des réponses pour un identifiant */
     function saveStatus(studentId, status) {
       if (!studentId) return;
-      localStorage.setItem(LS_KEYS.STATUS_PREFIX + studentId, JSON.stringify(status));
+      try {
+        localStorage.setItem(LS_KEYS.STATUS_PREFIX + studentId, JSON.stringify(status));
+      } catch (e) {
+         console.error("Erreur sauvegarde localStorage (status):", e);
+         toast("Impossible de sauvegarder la progression.", "err");
+      }
     }
 
     /** Charge le statut des réponses pour un identifiant */
@@ -489,6 +485,7 @@
       try {
         return JSON.parse(localStorage.getItem(LS_KEYS.STATUS_PREFIX + studentId) || '{}');
       } catch (e) {
+         console.error("Erreur chargement localStorage (status):", e);
         return {};
       }
     }
@@ -498,10 +495,12 @@
     /* =================================================================================== */
 
     document.addEventListener('DOMContentLoaded', () => {
+      console.log("DOM Chargé, initialisation..."); // Log de démarrage
+
       // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
       const metaForm = $('#metaForm');
-      const saveProfileBtn = $('#saveProfileBtn'); // Garder la référence même si on n'écoute plus le clic
+      const saveProfileBtn = $('#saveProfileBtn');
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
@@ -515,6 +514,14 @@
       const progressText = $('#progressText');
       const progressPct = $('#progressPct');
       const progressBar = $('#progressBar');
+      
+      // Vérifier si les éléments principaux existent
+      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent) {
+          console.error("Éléments UI principaux manquants ! Vérifiez les IDs HTML.");
+          toast("Erreur critique: Interface incomplète.", "err");
+          return; // Arrêter l'initialisation
+      }
+
 
       // --- État de l'application ---
       let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
@@ -527,10 +534,17 @@
       let isSubmittingProfile = false; // Flag pour éviter double soumission
 
       // --- Branding ---
-      $('#appTitle').textContent = CONFIG.BRAND.TITLE;
-      $('#brandTitle').textContent = CONFIG.BRAND.TITLE;
-      $('#brandLogo').src = CONFIG.BRAND.LOGO_URL;
-      $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
+      try {
+        document.title = CONFIG.BRAND.TITLE; // Titre de l'onglet
+        $('#appTitle').textContent = CONFIG.BRAND.TITLE;
+        $('#brandTitle').textContent = CONFIG.BRAND.TITLE;
+        $('#brandLogo').src = CONFIG.BRAND.LOGO_URL;
+        $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
+      } catch (e) {
+          console.error("Erreur configuration Branding:", e);
+          toast("Erreur chargement branding.", "warn");
+      }
+
 
       // ------------------------------------
       // Initialisation du profil
@@ -541,8 +555,11 @@
        * Affiche la modale si le profil n'est pas valide.
        */
       function initProfile() {
+        console.log("Initialisation du profil...");
         const meta = loadMeta();
-        if (meta && meta.studentCode && meta.cohort && meta.consent) {
+        // Vérification plus stricte : tous les champs + consentement
+        if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true) {
+          console.log("Profil trouvé dans localStorage:", meta);
           currentMeta = meta;
           // Pré-remplir le formulaire
           $('#studentCode').value = meta.studentCode;
@@ -557,8 +574,10 @@
           editProfileBtn.classList.remove('hidden');
           currentStatus = loadStatus(currentMeta.studentCode);
           renderAllCards();
+          console.log("Profil valide, affichage des cartes.");
         } else {
           // Profil invalide ou incomplet, on affiche la modale
+          console.log("Profil invalide ou absent, affichage de la modale.");
           profileModal.classList.remove('hidden');
           mainContent.classList.add('opacity-0');
           editProfileBtn.classList.add('hidden');
@@ -569,17 +588,24 @@
        * Gère la soumission du formulaire de profil.
        */
       metaForm.addEventListener('submit', (e) => {
-        console.log('Submit event triggered'); // Log 1: Vérifier si l'event est capturé
-        e.preventDefault(); // Empêcher le rechargement (DOIT être la première chose)
-        e.stopPropagation(); // Optionnel mais peut aider
-        console.log('Default prevented'); // Log 2: Confirmer que preventDefault a été appelé
-
+        console.log('[FORM SUBMIT] Événement détecté.'); // Log 1
+        
+        // CORRECTION: Assurer que preventDefault est appelé EN PREMIER
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+            console.log('[FORM SUBMIT] e.preventDefault() appelé.'); // Log 2
+        } else {
+            console.warn('[FORM SUBMIT] Événement "e" invalide, impossible d\'appeler preventDefault.');
+            // Tenter d'empêcher le rechargement autrement (moins fiable)
+            // return false; 
+        }
+        
         if (isSubmittingProfile) {
-          console.log('Soumission déjà en cours, ignorée');
+          console.log('[FORM SUBMIT] Soumission déjà en cours, ignorée.');
           return;
         }
         
-        console.log('Traitement de la soumission du profil...');
+        console.log('[FORM SUBMIT] Début du traitement...');
         isSubmittingProfile = true;
         saveProfileBtn.disabled = true;
         saveProfileBtn.classList.add('btn-disabled');
@@ -588,9 +614,10 @@
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
 
+        // Validation... (gardée identique)
         if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
           toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-          isSubmittingProfile = false;
+          isSubmittingProfile = false; 
           saveProfileBtn.disabled = false;
           saveProfileBtn.classList.remove('btn-disabled');
           return;
@@ -610,7 +637,7 @@
           return;
         }
 
-        console.log('Validation réussie, enregistrement...');
+        console.log('[FORM SUBMIT] Validation réussie, enregistrement...');
         currentMeta = {
           studentCode: studentCode,
           cohort: cohort,
@@ -622,12 +649,12 @@
         saveMeta(currentMeta);
         currentStatus = loadStatus(currentMeta.studentCode);
         
-        console.log('Fermeture de la modale...'); // Log 3: Juste avant de fermer
+        console.log('[FORM SUBMIT] Fermeture de la modale...');
         profileModal.classList.add('hidden');
-        console.log('Modale cachée.'); // Log 4: Juste après avoir caché
+        console.log('[FORM SUBMIT] Modale cachée.'); 
 
-        // CORRECTION: Suppression du setTimeout
-        console.log('Affichage du contenu principal et rendu des cartes...');
+        // Afficher immédiatement sans setTimeout
+        console.log('[FORM SUBMIT] Affichage contenu principal et rendu cartes...');
         renderAllCards();
         mainContent.classList.remove('opacity-0');
         editProfileBtn.classList.remove('hidden');
@@ -636,15 +663,19 @@
         isSubmittingProfile = false;
         saveProfileBtn.disabled = false;
         saveProfileBtn.classList.remove('btn-disabled');
-        console.log('Traitement de la soumission terminé.');
+        console.log('[FORM SUBMIT] Traitement terminé.');
 
       });
 
 
       // Bouton pour rouvrir la modale de profil
-      editProfileBtn.addEventListener('click', () => {
-        profileModal.classList.remove('hidden');
-      });
+      if (editProfileBtn) {
+          editProfileBtn.addEventListener('click', () => {
+            console.log("Clic sur 'Modifier le profil'");
+            profileModal.classList.remove('hidden');
+          });
+      }
+
 
       // ------------------------------------
       // Rendu des cartes et progression
@@ -652,13 +683,9 @@
 
       /**
        * Obtient la question spécifique pour le profil et le sujet.
-       * @param {string} profile - ex: 'etudiant'
-       * @param {string} topic - ex: 'declic'
-       * @returns {string} - La question formulée.
        */
       function getQuestion(profile, topic) {
         try {
-          // Essayer le profil spécifique, sinon 'autre', sinon message d'erreur
           const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
           return profileQuestions[topic] || "Question non définie.";
         } catch (e) {
@@ -671,32 +698,32 @@
        * (Re)Génère toutes les cartes de questions.
        */
       function renderAllCards() {
+        console.log("Rendu des cartes...");
         const profile = currentMeta.profile || 'autre';
         const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
         
-        // Si même 'autre' n'existe pas, on arrête
         if (!profileQuestions) {
-           console.error("Aucune question définie, même pour le profil 'autre'. Vérifiez APP_CONFIG.QUESTIONS.");
+           console.error("Configuration des questions manquante pour le profil:", profile);
            topics = [];
-           cardsHelperText.textContent = "Erreur de configuration des questions.";
-           cardsHelperText.classList.remove('hidden');
-           cardsGrid.innerHTML = '';
-           updateProgress(); // Mettre à jour la progression à 0
+           if (cardsHelperText) cardsHelperText.textContent = "Erreur config questions.";
+           if (cardsHelperText) cardsHelperText.classList.remove('hidden');
+           if (cardsGrid) cardsGrid.innerHTML = '';
+           updateProgress(); 
            return;
         }
 
         topics = Object.keys(profileQuestions);
 
         if (topics.length === 0) {
-          cardsHelperText.textContent = "Aucune question n'est configurée pour ce profil.";
-          cardsHelperText.classList.remove('hidden');
-          cardsGrid.innerHTML = '';
-          updateProgress(); // Mettre à jour la progression à 0
+          if (cardsHelperText) cardsHelperText.textContent = "Aucune question configurée.";
+          if (cardsHelperText) cardsHelperText.classList.remove('hidden');
+          if (cardsGrid) cardsGrid.innerHTML = '';
+          updateProgress();
           return;
         }
 
-        cardsHelperText.classList.add('hidden');
-        cardsGrid.innerHTML = ''; // Vider la grille
+        if (cardsHelperText) cardsHelperText.classList.add('hidden');
+        if (cardsGrid) cardsGrid.innerHTML = ''; 
 
         topics.forEach(topic => {
           const entry = currentStatus[topic];
@@ -706,7 +733,6 @@
           const card = document.createElement('button');
           card.type = 'button';
           card.dataset.topic = topic;
-          // Style conditionnel pour l'opacité si la carte est faite
           card.className = `glass-bubble w-full text-left rounded-xl p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
           
           card.innerHTML = `
@@ -725,57 +751,53 @@
           `;
           
           card.addEventListener('click', () => openModal(topic, card));
-          cardsGrid.appendChild(card);
+          if (cardsGrid) cardsGrid.appendChild(card);
         });
 
         updateProgress();
+        console.log("Cartes rendues.");
       }
 
       /**
-       * Met à jour la barre de progression (fixe et flottante).
+       * Met à jour la barre de progression.
        */
       function updateProgress() {
         const done = topics.filter(t => !!currentStatus[t]?.done).length;
         const total = topics.length;
         const pct = (total > 0) ? Math.round((done / total) * 100) : 0;
         
-        progressText.textContent = `${done}/${total} complétées`;
+        if (progressText) progressText.textContent = `${done}/${total} complétées`;
         
-        // Animer le pourcentage
         animateCounter(progressPct, currentAnimatedPct, pct, '%');
         currentAnimatedPct = pct;
 
-        progressBar.style.width = `${pct}%`;
+        if (progressBar) progressBar.style.width = `${pct}%`;
       }
       
-      /**
-       * Anime un compteur de nombre.
-       */
+      /** Anime un compteur de nombre. */
       function animateCounter(el, from, to, suffix = '') {
-        if (!el) return; // Sécurité si l'élément n'existe pas
-        if (from === to) {
-          el.textContent = `${to}${suffix}`;
-          return;
-        }
-        const duration = 400; // ms
-        const frameRate = 1000 / 60; // 60 fps
+        if (!el) return;
+        if (from === to) { el.textContent = `${to}${suffix}`; return; }
+        
+        const duration = 400; const frameRate = 1000 / 60;
         const totalFrames = Math.round(duration / frameRate);
         const diff = to - from;
         let frame = 0;
+        let animationFrameId;
 
-        const counter = setInterval(() => {
+        function step() {
           frame++;
-          // Utiliser une fonction d'easing (ex: easeOutQuad) pour un effet plus doux
-          const progress = 1 - Math.pow(1 - (frame / totalFrames), 2); 
+          const progress = 1 - Math.pow(1 - (frame / totalFrames), 2);
           const currentVal = from + (diff * progress);
-          
           el.textContent = `${Math.round(currentVal)}${suffix}`;
-
-          if (frame >= totalFrames) {
-            clearInterval(counter);
-            el.textContent = `${to}${suffix}`; // Assurer la valeur finale exacte
+          if (frame < totalFrames) {
+             animationFrameId = requestAnimationFrame(step);
+          } else {
+             el.textContent = `${to}${suffix}`;
           }
-        }, frameRate);
+        }
+        cancelAnimationFrame(animationFrameId); // Annuler animation précédente si besoin
+        animationFrameId = requestAnimationFrame(step);
       }
       
       // ------------------------------------
@@ -798,21 +820,17 @@
       const fileInfo = $('#fileInfo');
 
       let mediaStream, mediaRecorder, audioChunks = [], audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
-      let audioTranscription = ""; // Stocker la transcription
+      let audioTranscription = "";
       let startedAt = 0, pausedAt = 0, totalPausedTime = 0;
       let timerInterval = null;
       let audioContext, analyser, dataArray;
       
       /** Ouvre la modale pour un sujet donné */
       function openModal(topic, trigger) {
-        if (sending) {
-          toast('Un envoi est déjà en cours...', 'warn');
-          return;
-        }
-        // Vérifier si le profil est bien chargé (sécurité supplémentaire)
+        if (sending) { toast('Envoi en cours...', 'warn'); return; }
         if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
-           toast('Veuillez d'abord valider votre profil.', 'warn');
-           profileModal.classList.remove('hidden'); // Rouvrir la modale si besoin
+           toast('Veuillez valider votre profil.', 'warn');
+           profileModal.classList.remove('hidden'); 
            return;
         }
         
@@ -822,97 +840,80 @@
         $('#modalTheme').textContent = topic.charAt(0).toUpperCase() + topic.slice(1);
         $('#modalTitle').textContent = getQuestion(currentMeta.profile, topic);
         
-        resetRecording(true); // Réinitialiser l'état d'enregistrement
+        resetRecording(true); 
         
         recordModal.classList.remove('hidden');
-        btnRecord.focus(); // Mettre le focus sur le bouton d'enregistrement
+        btnRecord.focus(); 
       }
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
-        // Arrêter l'enregistrement et les flux s'ils sont actifs
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
         mediaStream?.getTracks().forEach(track => track.stop());
-        
-        recordModal.classList.add('hidden'); // Cacher la modale
-        
-        // Renvoyer le focus à l'élément qui a ouvert la modale
-        if (lastTrigger) {
-          lastTrigger.focus();
-        }
+        recordModal.classList.add('hidden'); 
+        if (lastTrigger) lastTrigger.focus();
       }
-      modalClose.addEventListener('click', closeModal);
-      // Fermer aussi si on clique en dehors de la modale
-      recordModal.addEventListener('click', (e) => {
-        if (e.target === recordModal) {
-            closeModal();
-        }
+      
+      if (modalClose) modalClose.addEventListener('click', closeModal);
+      if (recordModal) recordModal.addEventListener('click', (e) => {
+        if (e.target === recordModal) closeModal();
       });
-      // Fermer avec la touche Echap
       document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !recordModal.classList.contains('hidden')) {
+          if (e.key === 'Escape' && recordModal && !recordModal.classList.contains('hidden')) {
               closeModal();
           }
       });
       
       /** Met à jour le texte de statut */
-      function setStatus(t) { statusEl.textContent = t; }
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
       
       /** Formate les secondes en MM:SS */
       function hhmmss(s) {
-        const sec = Math.max(0, Math.floor(s)); // Assurer que le temps n'est pas négatif
+        const sec = Math.max(0, Math.floor(s));
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       }
       
-      /** Met à jour l'état (activé/désactivé) du bouton d'envoi */
+      /** Met à jour l'état du bouton d'envoi */
       function updateSendState() {
         const canSend = currentMeta.consent && !!audioBlob && !sending;
-        btnSend.disabled = !canSend;
-        btnSend.classList.toggle('btn-disabled', !canSend);
+        if (btnSend) {
+            btnSend.disabled = !canSend;
+            btnSend.classList.toggle('btn-disabled', !canSend);
+        }
       }
 
       /** Réinitialise l'interface d'enregistrement */
       function resetRecording(inModal = false) {
-        // Arrêter les flux et le contexte audio proprement
         mediaStream?.getTracks().forEach(t => t.stop());
         mediaStream = null;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant du recorder"); }
+          try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant recorder"); }
         }
         mediaRecorder = null;
         audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
         audioContext = null;
         
-        clearInterval(timerInterval);
-        timerInterval = null;
+        clearInterval(timerInterval); timerInterval = null;
         
-        audioChunks = [];
-        audioBlob = null;
-        audioTranscription = "";
-        if (audioUrl) {
-           URL.revokeObjectURL(audioUrl);
-           audioUrl = null;
-        }
+        audioChunks = []; audioBlob = null; audioTranscription = "";
+        if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
         
-        startedAt = 0;
-        pausedAt = 0;
-        totalPausedTime = 0;
+        startedAt = 0; pausedAt = 0; totalPausedTime = 0;
         
         if (inModal) {
-          previewWrap.classList.add('hidden');
-          transcriptionWrap.classList.add('hidden');
-          transcriptionText.textContent = "Génération de la transcription...";
-          timerEl.textContent = '00:00';
-          meterBar.style.width = '0%';
+          if(previewWrap) previewWrap.classList.add('hidden');
+          if(transcriptionWrap) transcriptionWrap.classList.add('hidden');
+          if(transcriptionText) transcriptionText.textContent = "Génération de la transcription...";
+          if(timerEl) timerEl.textContent = '00:00';
+          if(meterBar) meterBar.style.width = '0%';
           
-          btnRecord.classList.remove('hidden');
-          btnPause.classList.add('hidden');
-          btnResume.classList.add('hidden');
-          btnStop.disabled = true;
-          
-          btnRecord.disabled = false;
+          if(btnRecord) btnRecord.classList.remove('hidden');
+          if(btnPause) btnPause.classList.add('hidden');
+          if(btnResume) btnResume.classList.add('hidden');
+          if(btnStop) btnStop.disabled = true;
+          if(btnRecord) btnRecord.disabled = false;
           
           setStatus('Prêt');
           updateSendState();
@@ -921,39 +922,31 @@
 
       // --- Logique d'enregistrement ---
       
-      btnRecord.addEventListener('click', startRecording);
-      btnPause.addEventListener('click', pauseRecording);
-      btnResume.addEventListener('click', resumeRecording);
-      btnStop.addEventListener('click', stopRecording);
-      btnReRecord.addEventListener('click', () => {
-         resetRecording(true);
-      });
+      if(btnRecord) btnRecord.addEventListener('click', startRecording);
+      if(btnPause) btnPause.addEventListener('click', pauseRecording);
+      if(btnResume) btnResume.addEventListener('click', resumeRecording);
+      if(btnStop) btnStop.addEventListener('click', stopRecording);
+      if(btnReRecord) btnReRecord.addEventListener('click', () => resetRecording(true));
 
       /** Démarre l'enregistrement */
       async function startRecording() {
         resetRecording(true);
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-              noiseSuppression: true,
-              echoCancellation: true
-            } 
+            audio: { noiseSuppression: true, echoCancellation: true } 
           });
         } catch (err) {
           console.error("Erreur getUserMedia:", err);
-          let errorMsg = 'Erreur : Micro refusé ou non trouvé.';
-          if (err.name === 'NotAllowedError') errorMsg = 'Vous devez autoriser l\'accès au microphone.';
-          else if (err.name === 'NotFoundError') errorMsg = 'Aucun microphone trouvé.';
-          toast(errorMsg, 'err');
-          setStatus('Erreur micro');
-          return;
+          let errorMsg = 'Erreur: Micro refusé/non trouvé.';
+          if (err.name === 'NotAllowedError') errorMsg = 'Autorisation micro requise.';
+          else if (err.name === 'NotFoundError') errorMsg = 'Aucun micro trouvé.';
+          toast(errorMsg, 'err'); setStatus('Erreur micro'); return;
         }
 
         try {
           audioContext = new (window.AudioContext || window.webkitAudioContext)();
           analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256;
-          dataArray = new Uint8Array(analyser.frequencyBinCount);
+          analyser.fftSize = 256; dataArray = new Uint8Array(analyser.frequencyBinCount);
           const source = audioContext.createMediaStreamSource(mediaStream);
           source.connect(analyser);
 
@@ -962,39 +955,28 @@
           
           mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
 
-          mediaRecorder.ondataavailable = e => {
-            if (e.data && e.data.size > 0) audioChunks.push(e.data);
-          };
+          mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) audioChunks.push(e.data); };
 
           mediaRecorder.onstart = () => {
-            startedAt = Date.now();
-            totalPausedTime = 0;
-            setStatus('Enregistrement en cours…');
-            toast('Enregistrement démarré...');
+            startedAt = Date.now(); totalPausedTime = 0;
+            setStatus('Enregistrement en cours…'); toast('Enregistrement démarré...');
             
-            btnRecord.classList.add('hidden');
-            btnPause.classList.remove('hidden');
-            btnResume.classList.add('hidden');
-            btnStop.disabled = false;
+            btnRecord.classList.add('hidden'); btnPause.classList.remove('hidden');
+            btnResume.classList.add('hidden'); btnStop.disabled = false;
             
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
               const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
               const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
-              timerEl.textContent = hhmmss(sec);
+              if(timerEl) timerEl.textContent = hhmmss(sec);
               
               if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
-                stopRecording();
-                toast(`Temps maximum (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
+                stopRecording(); toast(`Temps max (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
               }
               
-              if (analyser && dataArray) {
-                analyser.getByteTimeDomainData(dataArray);
-                let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                  const v = (dataArray[i] - 128) / 128;
-                  sum += v * v;
-                }
+              if (analyser && dataArray && meterBar) {
+                analyser.getByteTimeDomainData(dataArray); let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) { const v = (dataArray[i] - 128) / 128; sum += v * v; }
                 const rms = Math.sqrt(sum / dataArray.length);
                 meterBar.style.width = Math.min(100, Math.floor(rms * 200)) + "%"; 
               }
@@ -1002,94 +984,78 @@
           };
           
           mediaRecorder.onstop = () => {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            meterBar.style.width = '0%';
+            clearInterval(timerInterval); timerInterval = null;
+            if (meterBar) meterBar.style.width = '0%';
             
             audioBlob = new Blob(audioChunks, { type: mimeType });
             
             if (audioBlob.size > CONFIG.LIMITS.MAX_BYTES) {
               toast(`Fichier trop volumineux (> ${Math.round(CONFIG.LIMITS.MAX_BYTES / 1024 / 1024)} Mo).`, 'err');
-              resetRecording(true);
-              return;
+              resetRecording(true); return;
             }
             if (audioBlob.size < 1000) {
                toast('Enregistrement trop court.', 'warn');
-               resetRecording(true);
-               return;
+               resetRecording(true); return;
             }
 
             audioUrl = URL.createObjectURL(audioBlob);
-            player.src = audioUrl;
-            previewWrap.classList.remove('hidden');
-            transcriptionWrap.classList.remove('hidden');
-            fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
+            if(player) player.src = audioUrl;
+            if(previewWrap) previewWrap.classList.remove('hidden');
+            if(transcriptionWrap) transcriptionWrap.classList.remove('hidden');
+            if(fileInfo && timerEl) fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${timerEl.textContent}`;
             
             setStatus('Transcription en cours...');
-            btnRecord.disabled = true;
-            btnStop.disabled = true;
+            if(btnRecord) btnRecord.disabled = true; if(btnStop) btnStop.disabled = true;
             
             transcribeAudio(audioBlob); 
             
             updateSendState();
             
-            mediaStream?.getTracks().forEach(t => t.stop());
-            mediaStream = null;
-            audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
-            audioContext = null;
+            mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
+            audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext tardive")); audioContext = null;
           };
 
           mediaRecorder.onerror = (event) => {
               console.error(`Erreur MediaRecorder: ${event.error.name}`, event.error);
-              toast(`Erreur d'enregistrement: ${event.error.message}`, 'err');
-              setStatus('Erreur enregistrement');
-              resetRecording(true);
+              toast(`Erreur enregistrement: ${event.error.message}`, 'err');
+              setStatus('Erreur enregistrement'); resetRecording(true);
           };
           
           mediaRecorder.start();
 
         } catch (err) {
-            console.error("Erreur initialisation enregistrement:", err);
+            console.error("Erreur init enregistrement:", err);
             toast("Impossible de démarrer l'enregistrement.", 'err');
-            setStatus('Erreur init');
-            resetRecording(true);
+            setStatus('Erreur init'); resetRecording(true);
         }
       }
       
       /** Met l'enregistrement en pause */
       function pauseRecording() {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          mediaRecorder.pause();
-          pausedAt = Date.now();
-          clearInterval(timerInterval);
-          timerInterval = null;
+        if (mediaRecorder?.state === 'recording') {
+          mediaRecorder.pause(); pausedAt = Date.now();
+          clearInterval(timerInterval); timerInterval = null;
           setStatus('En pause');
-          
-          btnPause.classList.add('hidden');
-          btnResume.classList.remove('hidden');
+          if(btnPause) btnPause.classList.add('hidden'); if(btnResume) btnResume.classList.remove('hidden');
         }
       }
       
       /** Reprend l'enregistrement */
       function resumeRecording() {
-        if (mediaRecorder && mediaRecorder.state === 'paused') {
+        if (mediaRecorder?.state === 'paused') {
           mediaRecorder.resume();
-          totalPausedTime += (Date.now() - pausedAt); 
-          pausedAt = 0;
+          totalPausedTime += (Date.now() - pausedAt); pausedAt = 0;
           setStatus('Enregistrement en cours…');
-          
-          btnPause.classList.remove('hidden');
-          btnResume.classList.add('hidden');
+          if(btnPause) btnPause.classList.remove('hidden'); if(btnResume) btnResume.classList.add('hidden');
           
           if (timerInterval) clearInterval(timerInterval);
           timerInterval = setInterval(() => {
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
             const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
-            timerEl.textContent = hhmmss(sec);
+            if (timerEl) timerEl.textContent = hhmmss(sec);
             if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
-            if (analyser && dataArray) {
-              analyser.getByteTimeDomainData(dataArray);
-              let sum = 0;
+            if (analyser && dataArray && meterBar) {
+              analyser.getByteTimeDomainData(dataArray); let sum = 0;
               for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
               const rms=Math.sqrt(sum/dataArray.length);
               meterBar.style.width=Math.min(100,Math.floor(rms*200))+"%";
@@ -1101,14 +1067,10 @@
       /** Arrête l'enregistrement */
       function stopRecording() {
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-          mediaRecorder.stop();
-          toast('Enregistrement arrêté.');
-          
-          btnRecord.classList.remove('hidden');
-          btnPause.classList.add('hidden');
-          btnResume.classList.add('hidden');
-          btnStop.disabled = true;
-          btnRecord.disabled = false;
+          mediaRecorder.stop(); toast('Enregistrement arrêté.');
+          if(btnRecord) btnRecord.classList.remove('hidden'); if(btnPause) btnPause.classList.add('hidden');
+          if(btnResume) btnResume.classList.add('hidden'); if(btnStop) btnStop.disabled = true;
+          if(btnRecord) btnRecord.disabled = false;
         }
       }
 
@@ -1116,32 +1078,22 @@
       // Logique d'Envoi et API
       // ------------------------------------
 
-      /**
-       * Wrapper Fetch sécurisé pour Google Apps Script (contournement CORS)
-       */
+      /** Wrapper Fetch sécurisé pour Google Apps Script */
       async function fetchGAS(url, payload) {
+        if (!url || url === "À_RENSEIGNER") throw new Error("Backend URL non configurée.");
         try {
           const response = await fetch(url, {
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'omit',
+            method: 'POST', mode: 'cors', credentials: 'omit',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-            redirect: 'follow'
+            body: JSON.stringify(payload), redirect: 'follow'
           });
           if (!response.ok) {
-            let errorText = `Erreur réseau : ${response.statusText} (${response.status})`;
-            try {
-              const errorJson = await response.json();
-              if (errorJson?.error) errorText = `Erreur backend : ${errorJson.error}`;
-            } catch(e) { /* ignore */ }
+            let errorText = `Erreur réseau: ${response.statusText} (${response.status})`;
+            try { const errJson = await response.json(); if (errJson?.error) errorText = `Erreur backend: ${errJson.error}`; } catch(e) {}
             throw new Error(errorText);
           }
           return response.json(); 
-        } catch (err) {
-           console.error("Erreur fetchGAS:", err);
-           throw new Error("Communication serveur échouée."); 
-        }
+        } catch (err) { console.error("Erreur fetchGAS:", err); throw new Error("Communication serveur échouée."); }
       }
 
       /** Convertit un Blob en Base64. */
@@ -1149,118 +1101,76 @@
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            try {
-              const base64 = reader.result.split(',')[1];
-              if (!base64) throw new Error("Conversion Base64 invalide.");
-              resolve(base64);
-            } catch (err) { reject(err); }
+            try { const base64 = reader.result.split(',')[1]; if (!base64) throw new Error("Conversion Base64 invalide."); resolve(base64); } catch (err) { reject(err); }
           };
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(blob);
+          reader.onerror = reject; reader.readAsDataURL(blob);
         });
       }
 
       /** Appelle le backend pour transcrire l'audio. */
       async function transcribeAudio(audioBlob) {
-        if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Erreur: Backend non configuré.', 'err');
-          setStatus('Erreur config');
-          transcriptionText.textContent = "[Erreur config backend]";
-          btnRecord.disabled = false; 
-          updateSendState();
-          return;
-        }
-        
         try {
-          setStatus('Conversion audio...');
-          const fileBase64 = await blobToBase64(audioBlob);
+          setStatus('Conversion audio...'); const fileBase64 = await blobToBase64(audioBlob);
           setStatus('Transcription en cours...');
-          
           const payload = { action: "transcribe", mimeType: mimeType, fileBase64: fileBase64 };
           const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
-          if (json.ok === false || typeof json.transcription !== 'string') {
-            throw new Error(json.error || 'Réponse transcription invalide.');
-          }
+          if (json.ok === false || typeof json.transcription !== 'string') { throw new Error(json.error || 'Réponse transcription invalide.'); }
 
           audioTranscription = json.transcription || "[Transcription vide]";
-          transcriptionText.textContent = audioTranscription;
-          setStatus('Prêt à l’envoi');
-          toast('Transcription réussie.', 'ok');
-
+          if(transcriptionText) transcriptionText.textContent = audioTranscription;
+          setStatus('Prêt à l’envoi'); toast('Transcription réussie.', 'ok');
         } catch (err) {
           console.error('Erreur transcription:', err);
           toast(`Transcription échouée (${err.message}). Envoi audio seul possible.`, 'err');
           setStatus('Erreur transcription');
-          transcriptionText.textContent = `[Échec transcription. Envoi audio seul.]`;
+          if(transcriptionText) transcriptionText.textContent = `[Échec transcription. Envoi audio seul.]`;
           audioTranscription = "[TRANSCRIPTION_FAILED]";
         } finally {
-          btnRecord.disabled = false;
-          btnStop.disabled = true;
+          if(btnRecord) btnRecord.disabled = false; if(btnStop) btnStop.disabled = true;
           updateSendState();
         }
       }
       
-      btnSend.addEventListener('click', submitOne);
+      if(btnSend) btnSend.addEventListener('click', submitOne);
 
       /** Envoie la réponse finale. */
       async function submitOne() {
         if (sending || !audioBlob) return; 
-        if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL === "À_RENSEIGNER") {
-          toast('Erreur: Backend non configuré.', 'err');
-          return;
-        }
-
-        sending = true;
-        setStatus('Envoi en cours…');
-        updateSendState();
-        toast('Envoi de votre réponse...');
+        
+        sending = true; setStatus('Envoi en cours…'); updateSendState(); toast('Envoi de votre réponse...');
         
         try {
-          setStatus('Préparation envoi...');
-          const fileBase64 = await blobToBase64(audioBlob);
-          const [mm, ss] = timerEl.textContent.split(':').map(Number);
+          setStatus('Préparation envoi...'); const fileBase64 = await blobToBase64(audioBlob);
+          const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
           const durationSec = (mm * 60 + ss) || 0;
 
           const payload = {
-            action: "uploadAudio",
-            ...currentMeta,
-            topic: currentTopic,
-            durationSec: durationSec,
-            mimeType: mimeType,
-            transcription: audioTranscription,
-            fileBase64: fileBase64,
-            clientUA: navigator.userAgent
+            action: "uploadAudio", ...currentMeta, topic: currentTopic,
+            durationSec: durationSec, mimeType: mimeType, transcription: audioTranscription,
+            fileBase64: fileBase64, clientUA: navigator.userAgent
           };
 
-          setStatus('Envoi données...');
-          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+          setStatus('Envoi données...'); const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+          if (json.ok === false) { throw new Error(json.error || 'Erreur inconnue enregistrement.'); }
 
-          if (json.ok === false) {
-            throw new Error(json.error || 'Erreur inconnue enregistrement.');
-          }
-
-          setStatus('Terminé ✅');
-          toast('Réponse envoyée !', 'ok');
+          setStatus('Terminé ✅'); toast('Réponse envoyée !', 'ok');
           
           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
           saveStatus(currentMeta.studentCode, currentStatus);
           
-          renderAllCards();
-          closeModal();
-
+          renderAllCards(); closeModal();
         } catch (err) {
           console.error('Erreur envoi final:', err);
-          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
-          setStatus('Erreur d’envoi');
+          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err'); setStatus('Erreur d’envoi');
         } finally {
-          sending = false;
-          updateSendState();
+          sending = false; updateSendState();
         }
       }
 
       // --- Démarrage ---
-      initProfile(); 
+      initProfile(); // Lancer l'initialisation
+      console.log("Initialisation terminée."); // Log de fin d'init
       
     }); // Fin de DOMContentLoaded
   </script>
