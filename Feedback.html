@@ -518,7 +518,7 @@
       /**
        * Gère la soumission du formulaire de profil.
        */
-       // CORRECTION: Écoute l'événement 'submit' du formulaire au lieu du 'click' du bouton
+      // CORRECTION : Rétablissement du 'submit' listener qui avait disparu
       metaForm.addEventListener('submit', (e) => {
         e.preventDefault(); // Empêcher le rechargement de la page
         
@@ -727,7 +727,7 @@
         }
         // Vérifier si le profil est bien chargé (sécurité supplémentaire)
         if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
-           toast('Veuillez d\'abord valider votre profil.', 'warn');
+           toast('Veuillez d'abord valider votre profil.', 'warn');
            profileModal.classList.remove('hidden'); // Rouvrir la modale si besoin
            return;
         }
@@ -746,14 +746,13 @@
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
-        // Demander confirmation si un enregistrement est en cours
-        if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-           // Remplacer confirm() par une modale custom si possible dans le futur
-           // Pour l'instant, confirm() est un compromis simple.
-          if (!confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?")) {
-            return; // L'utilisateur a annulé, on ne ferme pas la modale
-          }
-        }
+        // CORRECTION: Suppression du 'confirm()'
+        // if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
+        //   if (!confirm("Vous avez un enregistrement en cours. Voulez-vous vraiment l'annuler ?")) {
+        //     return;
+        //   }
+        // }
+        
         // Arrêter l'enregistrement et les flux s'ils sont actifs
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
@@ -852,12 +851,12 @@
       btnResume.addEventListener('click', resumeRecording);
       btnStop.addEventListener('click', stopRecording);
       btnReRecord.addEventListener('click', () => {
-         // Demander confirmation avant de réenregistrer si un audio existe déjà
-         if (audioBlob) {
-             if (!confirm("Voulez-vous vraiment effacer l'enregistrement actuel pour en faire un nouveau ?")) {
-                 return;
-             }
-         }
+         // CORRECTION: Suppression du 'confirm()'
+         // if (audioBlob) {
+         //     if (!confirm("Voulez-vous vraiment effacer l'enregistrement actuel pour en faire un nouveau ?")) {
+         //         return;
+         //     }
+         // }
          resetRecording(true); // Réinitialiser pour un nouvel enregistrement
       });
 
@@ -1202,6 +1201,7 @@
           // Réactiver les boutons même si la transcription échoue
           btnRecord.disabled = false;
           btnStop.disabled = true; // Stop reste désactivé après l'arrêt
+          // CORRECTION: Ligne coupée
           updateSendState(); // Mettre à jour l'état du bouton Envoyer
         }
       }
