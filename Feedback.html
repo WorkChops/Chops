@@ -281,7 +281,7 @@
 
         <div class="text-right pt-2">
           <!-- CORRECTION: Changé type="button" en type="submit" -->
-          <button id="saveProfileBtn" type="button" class="btn btn-primary">Valider et commencer</button>
+          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
         </div>
       </form>
     </div>
@@ -515,22 +515,23 @@
         }
       }
 
-      /**
-       * Gère la soumission du formulaire de profil.
-       */
-      // CORRECTION : Rétablissement du 'submit' listener qui avait disparu
-let isSubmittingProfile = false; // AJOUT : Flag de protection
+      /* Gère la validation du formulaire de profil.*/
+let isSubmittingProfile = false;
 
+// Gestionnaire pour le bouton de validation
 saveProfileBtn.addEventListener('click', (e) => {
+  e.preventDefault(); // Par sécurité
+  e.stopPropagation();
   
-  // AJOUT : Empêcher les soumissions multiples
+  // Empêcher les soumissions multiples
   if (isSubmittingProfile) {
     console.log('Soumission déjà en cours, ignorée');
-    return false;
+    return;
   }
   
   isSubmittingProfile = true;
-  saveProfileBtn.disabled = true; // AJOUT : Désactiver le bouton
+  saveProfileBtn.disabled = true;
+  saveProfileBtn.classList.add('btn-disabled');
   
   const studentCode = $('#studentCode').value.trim();
   const cohort = $('#cohort').value.trim();
@@ -538,21 +539,24 @@ saveProfileBtn.addEventListener('click', (e) => {
 
   if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
     toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-    isSubmittingProfile = false; // AJOUT : Réinitialiser
-    saveProfileBtn.disabled = false; // AJOUT : Réactiver
-    return false; // MODIFIÉ : return false au lieu de return
+    isSubmittingProfile = false;
+    saveProfileBtn.disabled = false;
+    saveProfileBtn.classList.remove('btn-disabled');
+    return;
   }
   if (cohort.length < 1) {
     toast('Veuillez renseigner votre contexte.', 'warn');
-    isSubmittingProfile = false; // AJOUT
-    saveProfileBtn.disabled = false; // AJOUT
-    return false; // MODIFIÉ
+    isSubmittingProfile = false;
+    saveProfileBtn.disabled = false;
+    saveProfileBtn.classList.remove('btn-disabled');
+    return;
   }
   if (!consent) {
     toast('Le consentement est requis pour continuer.', 'warn');
-    isSubmittingProfile = false; // AJOUT
-    saveProfileBtn.disabled = false; // AJOUT
-    return false; // MODIFIÉ
+    isSubmittingProfile = false;
+    saveProfileBtn.disabled = false;
+    saveProfileBtn.classList.remove('btn-disabled');
+    return;
   }
 
   currentMeta = {
@@ -566,22 +570,27 @@ saveProfileBtn.addEventListener('click', (e) => {
   saveMeta(currentMeta);
   currentStatus = loadStatus(currentMeta.studentCode);
   
-  // MODIFIÉ : Fermer AVANT de rendre les cartes
+  // Fermer la modale
   profileModal.classList.add('hidden');
   
-  // AJOUT : Délai pour éviter les conflits
+  // Afficher les cartes
   setTimeout(() => {
     renderAllCards();
     mainContent.classList.remove('opacity-0');
     editProfileBtn.classList.remove('hidden');
     toast('Profil enregistré !', 'ok');
     
-    // AJOUT : Réinitialiser le flag
     isSubmittingProfile = false;
     saveProfileBtn.disabled = false;
+    saveProfileBtn.classList.remove('btn-disabled');
   }, 150);
-  
-  return false; // AJOUT : Bloquer totalement la soumission
+});
+
+// AUSSI bloquer la soumission du formulaire lui-même
+metaForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  return false;
 });
 
       // Bouton pour rouvrir la modale de profil
