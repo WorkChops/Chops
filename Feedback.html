@@ -596,8 +596,7 @@
             console.log('[FORM SUBMIT] e.preventDefault() appelé.'); // Log 2
         } else {
             console.warn('[FORM SUBMIT] Événement "e" invalide, impossible d\'appeler preventDefault.');
-            // Tenter d'empêcher le rechargement autrement (moins fiable)
-            // return false; 
+            return; // Arrêter si l'événement est invalide
         }
         
         if (isSubmittingProfile) {
@@ -686,8 +685,14 @@
        */
       function getQuestion(profile, topic) {
         try {
-          const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
-          return profileQuestions[topic] || "Question non définie.";
+           // CORRECTION: Logique de fallback améliorée
+           let effectiveProfile = profile || 'autre';
+           let questions = CONFIG.QUESTIONS[effectiveProfile];
+           if (!questions || Object.keys(questions).length === 0) {
+               effectiveProfile = 'autre';
+               questions = CONFIG.QUESTIONS['autre'];
+           }
+           return questions[topic] || "Question non définie.";
         } catch (e) {
           console.error(`Erreur getQuestion(${profile}, ${topic})`, e);
           return "Question non disponible.";
@@ -698,37 +703,48 @@
        * (Re)Génère toutes les cartes de questions.
        */
       function renderAllCards() {
-        console.log("Rendu des cartes...");
-        const profile = currentMeta.profile || 'autre';
-        const profileQuestions = CONFIG.QUESTIONS[profile] || CONFIG.QUESTIONS['autre'];
-        
-        if (!profileQuestions) {
-           console.error("Configuration des questions manquante pour le profil:", profile);
-           topics = [];
-           if (cardsHelperText) cardsHelperText.textContent = "Erreur config questions.";
-           if (cardsHelperText) cardsHelperText.classList.remove('hidden');
-           if (cardsGrid) cardsGrid.innerHTML = '';
-           updateProgress(); 
-           return;
+        console.log("Rendu des cartes pour le profil:", currentMeta.profile); // Log profile being used
+        let effectiveProfile = currentMeta.profile || 'autre';
+        let profileQuestions = CONFIG.QUESTIONS[effectiveProfile];
+
+        // Si le profil n'existe pas OU n'a pas de questions, essayer 'autre'
+        if (!profileQuestions || Object.keys(profileQuestions).length === 0) {
+            console.warn(`Profil '${effectiveProfile}' non trouvé ou vide, fallback sur 'autre'.`);
+            effectiveProfile = 'autre';
+            profileQuestions = CONFIG.QUESTIONS['autre'];
         }
 
-        topics = Object.keys(profileQuestions);
-
-        if (topics.length === 0) {
-          if (cardsHelperText) cardsHelperText.textContent = "Aucune question configurée.";
+        if (!profileQuestions) {
+          // Cas critique: même 'autre' n'existe pas ou est vide
+          console.error("Configuration des questions manquante, même pour 'autre'. Vérifiez APP_CONFIG.");
+          topics = [];
+          if (cardsHelperText) cardsHelperText.textContent = "Erreur config questions.";
           if (cardsHelperText) cardsHelperText.classList.remove('hidden');
           if (cardsGrid) cardsGrid.innerHTML = '';
-          updateProgress();
+          updateProgress(); 
+          return;
+        }
+
+        topics = Object.keys(profileQuestions); // Obtenir les clés des questions effectives
+        console.log(`Utilisation du profil '${effectiveProfile}', Topics trouvés:`, topics); // Log topics found
+
+        if (topics.length === 0) {
+          // Ce cas ne devrait plus arriver si 'autre' est bien configuré
+          console.warn("Aucun topic trouvé même après fallback.");
+          if (cardsHelperText) cardsHelperText.textContent = "Aucune question n'est configurée.";
+          if (cardsHelperText) cardsHelperText.classList.remove('hidden');
+          if (cardsGrid) cardsGrid.innerHTML = '';
+          updateProgress(); // Mettre à jour la progression à 0/0
           return;
         }
 
         if (cardsHelperText) cardsHelperText.classList.add('hidden');
-        if (cardsGrid) cardsGrid.innerHTML = ''; 
+        if (cardsGrid) cardsGrid.innerHTML = ''; // Vider la grille
 
         topics.forEach(topic => {
           const entry = currentStatus[topic];
           const done = !!entry?.done;
-          const questionText = getQuestion(profile, topic);
+          const questionText = getQuestion(effectiveProfile, topic); // Utiliser effectiveProfile ici aussi
           
           const card = document.createElement('button');
           card.type = 'button';
@@ -758,13 +774,16 @@
         console.log("Cartes rendues.");
       }
 
+
       /**
        * Met à jour la barre de progression.
        */
       function updateProgress() {
         const done = topics.filter(t => !!currentStatus[t]?.done).length;
-        const total = topics.length;
+        const total = topics.length; // Sera 0 si topics est vide
         const pct = (total > 0) ? Math.round((done / total) * 100) : 0;
+        
+        console.log(`Mise à jour progression: ${done}/${total} (${pct}%)`); // Log progression
         
         if (progressText) progressText.textContent = `${done}/${total} complétées`;
         
