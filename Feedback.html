@@ -21,8 +21,8 @@
       // Utilisez des chemins relatifs (ex: ./assets/logo.png) si les images sont
       // dans le même dépôt, ou des URLs complètes (https://...) si elles sont hébergées ailleurs.
       BRAND: {
-        TITLE: "Feedback CHOPS",
-        LOGO_URL: "./assets/logo.png", // Image pour l'en-tête
+        TITLE: "Feedback CHOPS", // <--- C'est bien ce titre qui sera utilisé
+        LOGO_URL: "Chops/CHOPStandard.svg", // Image pour l'en-tête
         MARK_URL: "Chops/CHOPiBasic.svg", // Icône pour les cartes
         FAVICON_URL: "Chops/CHOPiBasic.svg" // Icône pour l'onglet
       },
@@ -94,7 +94,8 @@
   <!-- ============================= FIN DE LA CONFIGURATION =========================== -->
   <!-- =================================================================================== -->
 
-  <title id="appTitle">CHOPS – Retour vocal</title>
+  <!-- NETTOYAGE: Le titre ici sera écrasé par le script, mais on peut le mettre à jour pour cohérence -->
+  <title id="appTitle">Feedback CHOPS</title>
   <meta name="description" content="Mini-Voiceform CHOPS — collecte sécurisée de retours vocaux.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -201,19 +202,16 @@
     #profileModal .glass-bubble {
         overflow-y: auto; /* Permettre le défilement de TOUTE la modale si besoin */
         max-height: 90vh; /* Limiter la hauteur */
-        /* Retrait de display:flex et flex-direction:column */
     }
     #profileModal form {
-        overflow-y: visible; /* Le formulaire ne scrolle plus lui-même */
-        padding-bottom: 0; /* Plus besoin d'espace pour le bouton fixe */
-        flex-grow: 0; /* Taille normale */
+        overflow-y: visible; 
+        padding-bottom: 0; 
+        flex-grow: 0; 
     }
-    /* Style pour le conteneur du bouton à la fin du formulaire */
     .modal-footer {
-       padding-top: 1rem; /* Espace au-dessus du bouton */
+       padding-top: 1rem; 
        text-align: right;
     }
-    /* Suppression des styles .modal-footer-sticky */
 
   </style>
 </head>
@@ -223,7 +221,8 @@
   <header class="max-w-5xl mx-auto px-4 pt-6 pb-3 flex items-center justify-between gap-3">
     <div class="flex items-center gap-3">
       <img id="brandLogo" src="https://placehold.co/120x40/f0f0f0/333?text=Logo" alt="Logo" class="h-10 w-auto">
-      <h1 id="brandTitle" class="text-xl font-semibold text-gray-800 hidden sm:block">CHOPS – Retour vocal</h1>
+      <!-- NETTOYAGE: Le titre H1 sera mis à jour par le script -->
+      <h1 id="brandTitle" class="text-xl font-semibold text-gray-800 hidden sm:block"></h1>
     </div>
     <button id="editProfileBtn" class="hidden text-sm font-medium text-indigo-600 hover:text-indigo-800">
       Modifier le profil
@@ -232,9 +231,10 @@
 
   <!-- Contenu Principal (Cartes) -->
   <main id="mainContent" class="max-w-5xl mx-auto p-4 space-y-6 opacity-0 transition-opacity duration-500">
-    <div id="cardsHelperText" class="text-center text-gray-500 px-4 py-8">
+    <!-- NETTOYAGE: Suppression du helper text devenu inutile -->
+    <!-- <div id="cardsHelperText" class="text-center text-gray-500 px-4 py-8">
       <p>Veuillez d'abord renseigner vos informations pour afficher les questions.</p>
-    </div>
+    </div> -->
     
     <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <!-- Les cartes de questions seront injectées ici par le script -->
@@ -265,7 +265,6 @@
   <div id="profileModal" class="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 pt-4 pb-4" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
     <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
     
-    <!-- CORRECTION MOBILE: Simplification - overflow et max-h sur le conteneur principal -->
     <div class="glass-bubble relative w-full max-w-2xl rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
       <h2 id="profileModalTitle" class="text-2xl font-bold text-gray-900 mb-2">Vos informations</h2>
       <p class="text-sm text-gray-600 mb-6">Pour personnaliser les questions, veuillez renseigner les champs ci-dessous.</p>
@@ -310,7 +309,6 @@
           </label>
         </fieldset>
 
-        <!-- CORRECTION MOBILE: Bouton à la fin du formulaire, dans la zone scrollable -->
         <div class="modal-footer">
             <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
         </div>
@@ -504,7 +502,8 @@
       const editProfileBtn = $('#editProfileBtn');
       const mainContent = $('#mainContent');
       const cardsGrid = $('#cardsGrid');
-      const cardsHelperText = $('#cardsHelperText');
+      // NETTOYAGE: Suppression de la référence au helper text
+      // const cardsHelperText = $('#cardsHelperText'); 
       
       const recordModal = $('#recordModal');
       const modalClose = $('#modalClose');
@@ -535,11 +534,18 @@
 
       // --- Branding ---
       try {
-        document.title = CONFIG.BRAND.TITLE; // Titre de l'onglet
-        $('#appTitle').textContent = CONFIG.BRAND.TITLE;
-        $('#brandTitle').textContent = CONFIG.BRAND.TITLE;
-        $('#brandLogo').src = CONFIG.BRAND.LOGO_URL;
-        $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
+        // CORRECTION BRANDING: Utiliser document.title pour l'onglet et #brandTitle pour le H1
+        const brandTitleText = CONFIG.BRAND.TITLE || "Feedback App"; // Fallback
+        document.title = brandTitleText; 
+        const brandTitleEl = $('#brandTitle');
+        if (brandTitleEl) brandTitleEl.textContent = brandTitleText;
+        
+        const brandLogoEl = $('#brandLogo');
+        if (brandLogoEl) brandLogoEl.src = CONFIG.BRAND.LOGO_URL;
+        
+        const faviconEl = $('#favicon');
+        if (faviconEl) faviconEl.href = CONFIG.BRAND.FAVICON_URL;
+        
       } catch (e) {
           console.error("Erreur configuration Branding:", e);
           toast("Erreur chargement branding.", "warn");
@@ -579,8 +585,9 @@
           // Profil invalide ou incomplet, on affiche la modale
           console.log("Profil invalide ou absent, affichage de la modale.");
           profileModal.classList.remove('hidden');
-          mainContent.classList.add('opacity-0');
+          mainContent.classList.add('opacity-0'); // Garder le contenu principal masqué
           editProfileBtn.classList.add('hidden');
+          updateProgress(); // S'assurer que la progression est à 0 si aucun profil
         }
       }
 
@@ -588,23 +595,22 @@
        * Gère la soumission du formulaire de profil.
        */
       metaForm.addEventListener('submit', (e) => {
-        console.log('[FORM SUBMIT] Événement détecté.'); // Log 1
+        console.log('[FORM SUBMIT] Événement détecté.'); 
         
-        // CORRECTION: Assurer que preventDefault est appelé EN PREMIER
         if (e && typeof e.preventDefault === 'function') {
             e.preventDefault();
-            console.log('[FORM SUBMIT] e.preventDefault() appelé.'); // Log 2
+            console.log('[FORM SUBMIT] e.preventDefault() appelé.'); 
         } else {
-            console.warn('[FORM SUBMIT] Événement "e" invalide, impossible d\'appeler preventDefault.');
-            return; // Arrêter si l'événement est invalide
+            console.warn('[FORM SUBMIT] Événement "e" invalide.');
+            return; 
         }
         
         if (isSubmittingProfile) {
-          console.log('[FORM SUBMIT] Soumission déjà en cours, ignorée.');
+          console.log('[FORM SUBMIT] Soumission déjà en cours.');
           return;
         }
         
-        console.log('[FORM SUBMIT] Début du traitement...');
+        console.log('[FORM SUBMIT] Début traitement...');
         isSubmittingProfile = true;
         saveProfileBtn.disabled = true;
         saveProfileBtn.classList.add('btn-disabled');
@@ -613,56 +619,41 @@
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
 
-        // Validation... (gardée identique)
+        // Validation...
         if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
-          toast('Identifiant invalide (lettres, chiffres, _, - uniquement).', 'warn');
-          isSubmittingProfile = false; 
-          saveProfileBtn.disabled = false;
-          saveProfileBtn.classList.remove('btn-disabled');
-          return;
+          toast('Identifiant invalide.', 'warn');
+          isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); return;
         }
         if (cohort.length < 1) {
-          toast('Veuillez renseigner votre contexte.', 'warn');
-          isSubmittingProfile = false;
-          saveProfileBtn.disabled = false;
-          saveProfileBtn.classList.remove('btn-disabled');
-          return;
+          toast('Contexte requis.', 'warn');
+          isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); return;
         }
         if (!consent) {
-          toast('Le consentement est requis pour continuer.', 'warn');
-          isSubmittingProfile = false;
-          saveProfileBtn.disabled = false;
-          saveProfileBtn.classList.remove('btn-disabled');
-          return;
+          toast('Consentement requis.', 'warn');
+          isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); return;
         }
 
-        console.log('[FORM SUBMIT] Validation réussie, enregistrement...');
+        console.log('[FORM SUBMIT] Validation OK, sauvegarde...');
         currentMeta = {
-          studentCode: studentCode,
-          cohort: cohort,
-          profile: $('#profile').value,
-          used: $('#used').value,
+          studentCode: studentCode, cohort: cohort,
+          profile: $('#profile').value, used: $('#used').value,
           consent: true
         };
         
         saveMeta(currentMeta);
-        currentStatus = loadStatus(currentMeta.studentCode);
+        currentStatus = loadStatus(currentMeta.studentCode); // Important: charger le statut APRES avoir défini le studentCode
         
-        console.log('[FORM SUBMIT] Fermeture de la modale...');
+        console.log('[FORM SUBMIT] Fermeture modale...');
         profileModal.classList.add('hidden');
-        console.log('[FORM SUBMIT] Modale cachée.'); 
-
-        // Afficher immédiatement sans setTimeout
-        console.log('[FORM SUBMIT] Affichage contenu principal et rendu cartes...');
-        renderAllCards();
+        
+        console.log('[FORM SUBMIT] Affichage contenu & rendu cartes...');
+        renderAllCards(); // Appeler AVANT d'afficher pour éviter le "flash"
         mainContent.classList.remove('opacity-0');
         editProfileBtn.classList.remove('hidden');
         toast('Profil enregistré !', 'ok');
         
-        isSubmittingProfile = false;
-        saveProfileBtn.disabled = false;
-        saveProfileBtn.classList.remove('btn-disabled');
-        console.log('[FORM SUBMIT] Traitement terminé.');
+        isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled');
+        console.log('[FORM SUBMIT] Terminé.');
 
       });
 
@@ -670,7 +661,13 @@
       // Bouton pour rouvrir la modale de profil
       if (editProfileBtn) {
           editProfileBtn.addEventListener('click', () => {
-            console.log("Clic sur 'Modifier le profil'");
+            console.log("Clic 'Modifier profil'");
+            // Pré-remplir la modale avec les infos actuelles (au cas où elles auraient changé)
+            $('#studentCode').value = currentMeta.studentCode;
+            $('#cohort').value = currentMeta.cohort;
+            $('#profile').value = currentMeta.profile;
+            $('#used').value = currentMeta.used;
+            $('#consent').checked = currentMeta.consent;
             profileModal.classList.remove('hidden');
           });
       }
@@ -685,17 +682,22 @@
        */
       function getQuestion(profile, topic) {
         try {
-           // CORRECTION: Logique de fallback améliorée
            let effectiveProfile = profile || 'autre';
            let questions = CONFIG.QUESTIONS[effectiveProfile];
-           if (!questions || Object.keys(questions).length === 0) {
+           // Si le profil n'existe pas OU n'a pas la question spécifique, utiliser 'autre'
+           if (!questions || !questions.hasOwnProperty(topic)) {
                effectiveProfile = 'autre';
                questions = CONFIG.QUESTIONS['autre'];
            }
-           return questions[topic] || "Question non définie.";
+           // S'assurer que 'autre' existe et a la question
+           if (!questions || !questions.hasOwnProperty(topic)) {
+               console.error(`Question manquante pour topic '${topic}', même dans 'autre'.`);
+               return "[Question manquante]"; // Fallback plus explicite
+           }
+           return questions[topic];
         } catch (e) {
           console.error(`Erreur getQuestion(${profile}, ${topic})`, e);
-          return "Question non disponible.";
+          return "[Erreur question]";
         }
       }
       
@@ -703,74 +705,73 @@
        * (Re)Génère toutes les cartes de questions.
        */
       function renderAllCards() {
-        console.log("Rendu des cartes pour le profil:", currentMeta.profile); // Log profile being used
+        console.log("renderAllCards - Profil actuel:", currentMeta.profile);
+        // Utiliser le profil courant ou 'autre' par défaut
         let effectiveProfile = currentMeta.profile || 'autre';
         let profileQuestions = CONFIG.QUESTIONS[effectiveProfile];
 
-        // Si le profil n'existe pas OU n'a pas de questions, essayer 'autre'
-        if (!profileQuestions || Object.keys(profileQuestions).length === 0) {
-            console.warn(`Profil '${effectiveProfile}' non trouvé ou vide, fallback sur 'autre'.`);
+        // Vérifier si le profil existe, sinon fallback sur 'autre'
+        if (!profileQuestions || typeof profileQuestions !== 'object') {
+            console.warn(`Profil '${effectiveProfile}' non trouvé, fallback sur 'autre'.`);
             effectiveProfile = 'autre';
             profileQuestions = CONFIG.QUESTIONS['autre'];
         }
-
-        if (!profileQuestions) {
-          // Cas critique: même 'autre' n'existe pas ou est vide
-          console.error("Configuration des questions manquante, même pour 'autre'. Vérifiez APP_CONFIG.");
+        
+        // Vérifier si 'autre' existe et est valide
+        if (!profileQuestions || typeof profileQuestions !== 'object') {
+          console.error("Config questions invalide: 'autre' manque ou n'est pas un objet.");
           topics = [];
-          if (cardsHelperText) cardsHelperText.textContent = "Erreur config questions.";
-          if (cardsHelperText) cardsHelperText.classList.remove('hidden');
-          if (cardsGrid) cardsGrid.innerHTML = '';
+          if (cardsGrid) cardsGrid.innerHTML = '<p class="text-red-600 text-center col-span-full">Erreur: Configuration des questions invalide.</p>';
           updateProgress(); 
           return;
         }
 
-        topics = Object.keys(profileQuestions); // Obtenir les clés des questions effectives
-        console.log(`Utilisation du profil '${effectiveProfile}', Topics trouvés:`, topics); // Log topics found
+        topics = Object.keys(profileQuestions);
+        console.log(`Utilisation profil '${effectiveProfile}', Topics:`, topics);
 
-        if (topics.length === 0) {
-          // Ce cas ne devrait plus arriver si 'autre' est bien configuré
-          console.warn("Aucun topic trouvé même après fallback.");
-          if (cardsHelperText) cardsHelperText.textContent = "Aucune question n'est configurée.";
-          if (cardsHelperText) cardsHelperText.classList.remove('hidden');
-          if (cardsGrid) cardsGrid.innerHTML = '';
-          updateProgress(); // Mettre à jour la progression à 0/0
-          return;
+        if (topics.length === 0 && effectiveProfile === 'autre') {
+          // Si même 'autre' n'a pas de questions
+           console.error("Aucune question définie, même pour le profil 'autre'.");
+           if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question configurée.</p>';
+        } else if (topics.length === 0) {
+           // Si le profil spécifique n'a pas de questions (devrait avoir fallback sur 'autre')
+           console.warn(`Profil '${effectiveProfile}' n'a aucune question définie.`);
+           if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question pour ce profil.</p>';
+        } else {
+           // On a des questions, on peut vider la grille
+           if (cardsGrid) cardsGrid.innerHTML = ''; 
+           
+           topics.forEach(topic => {
+             const entry = currentStatus[topic];
+             const done = !!entry?.done;
+             const questionText = getQuestion(effectiveProfile, topic); // Utiliser la fonction sécurisée
+             
+             const card = document.createElement('button');
+             card.type = 'button';
+             card.dataset.topic = topic;
+             card.className = `glass-bubble w-full text-left rounded-xl p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
+             
+             card.innerHTML = `
+               <div class="flex items-center justify-between">
+                 <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                   <img src="${CONFIG.BRAND.MARK_URL}" alt="" class="h-5 w-5">
+                   ${topic.charAt(0).toUpperCase() + topic.slice(1)} 
+                 </span>
+                 ${done
+                   ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`
+                   : `<span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">À faire</span>`
+                 }
+               </div>
+               <p class="text-sm text-gray-800">${questionText}</p>
+               ${done && entry.at ? `<p class="text-xs text-gray-500 pt-2">Répondu le ${new Date(entry.at).toLocaleDateString()}</p>` : ''}
+             `;
+             
+             card.addEventListener('click', () => openModal(topic, card));
+             if (cardsGrid) cardsGrid.appendChild(card);
+           });
         }
 
-        if (cardsHelperText) cardsHelperText.classList.add('hidden');
-        if (cardsGrid) cardsGrid.innerHTML = ''; // Vider la grille
-
-        topics.forEach(topic => {
-          const entry = currentStatus[topic];
-          const done = !!entry?.done;
-          const questionText = getQuestion(effectiveProfile, topic); // Utiliser effectiveProfile ici aussi
-          
-          const card = document.createElement('button');
-          card.type = 'button';
-          card.dataset.topic = topic;
-          card.className = `glass-bubble w-full text-left rounded-xl p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
-          
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                <img src="${CONFIG.BRAND.MARK_URL}" alt="" class="h-5 w-5">
-                ${topic.charAt(0).toUpperCase() + topic.slice(1)} 
-              </span>
-              ${done
-                ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`
-                : `<span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">À faire</span>`
-              }
-            </div>
-            <p class="text-sm text-gray-800">${questionText}</p>
-            ${done && entry.at ? `<p class="text-xs text-gray-500 pt-2">Répondu le ${new Date(entry.at).toLocaleDateString()}</p>` : ''}
-          `;
-          
-          card.addEventListener('click', () => openModal(topic, card));
-          if (cardsGrid) cardsGrid.appendChild(card);
-        });
-
-        updateProgress();
+        updateProgress(); // Mettre à jour la progression même s'il n'y a pas de cartes
         console.log("Cartes rendues.");
       }
 
@@ -779,11 +780,13 @@
        * Met à jour la barre de progression.
        */
       function updateProgress() {
-        const done = topics.filter(t => !!currentStatus[t]?.done).length;
-        const total = topics.length; // Sera 0 si topics est vide
+        // CORRECTION: S'assurer que topics est bien un array avant filter
+        const validTopics = Array.isArray(topics) ? topics : []; 
+        const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
+        const total = validTopics.length; 
         const pct = (total > 0) ? Math.round((done / total) * 100) : 0;
         
-        console.log(`Mise à jour progression: ${done}/${total} (${pct}%)`); // Log progression
+        console.log(`Update Progress: ${done}/${total} (${pct}%)`); 
         
         if (progressText) progressText.textContent = `${done}/${total} complétées`;
         
@@ -795,7 +798,8 @@
       
       /** Anime un compteur de nombre. */
       function animateCounter(el, from, to, suffix = '') {
-        if (!el) return;
+        // ... (fonction inchangée) ...
+         if (!el) return;
         if (from === to) { el.textContent = `${to}${suffix}`; return; }
         
         const duration = 400; const frameRate = 1000 / 60;
@@ -846,6 +850,7 @@
       
       /** Ouvre la modale pour un sujet donné */
       function openModal(topic, trigger) {
+         // ... (fonction inchangée) ...
         if (sending) { toast('Envoi en cours...', 'warn'); return; }
         if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
            toast('Veuillez valider votre profil.', 'warn');
@@ -867,6 +872,7 @@
 
       /** Ferme la modale d'enregistrement */
       function closeModal() {
+         // ... (fonction inchangée) ...
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
@@ -890,12 +896,14 @@
       
       /** Formate les secondes en MM:SS */
       function hhmmss(s) {
+        // ... (fonction inchangée) ...
         const sec = Math.max(0, Math.floor(s));
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       }
       
       /** Met à jour l'état du bouton d'envoi */
       function updateSendState() {
+        // ... (fonction inchangée) ...
         const canSend = currentMeta.consent && !!audioBlob && !sending;
         if (btnSend) {
             btnSend.disabled = !canSend;
@@ -905,6 +913,7 @@
 
       /** Réinitialise l'interface d'enregistrement */
       function resetRecording(inModal = false) {
+        // ... (fonction inchangée) ...
         mediaStream?.getTracks().forEach(t => t.stop());
         mediaStream = null;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -949,6 +958,7 @@
 
       /** Démarre l'enregistrement */
       async function startRecording() {
+         // ... (fonction inchangée) ...
         resetRecording(true);
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia({ 
@@ -1051,6 +1061,7 @@
       
       /** Met l'enregistrement en pause */
       function pauseRecording() {
+         // ... (fonction inchangée) ...
         if (mediaRecorder?.state === 'recording') {
           mediaRecorder.pause(); pausedAt = Date.now();
           clearInterval(timerInterval); timerInterval = null;
@@ -1061,6 +1072,7 @@
       
       /** Reprend l'enregistrement */
       function resumeRecording() {
+         // ... (fonction inchangée) ...
         if (mediaRecorder?.state === 'paused') {
           mediaRecorder.resume();
           totalPausedTime += (Date.now() - pausedAt); pausedAt = 0;
@@ -1085,6 +1097,7 @@
       
       /** Arrête l'enregistrement */
       function stopRecording() {
+         // ... (fonction inchangée) ...
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
           mediaRecorder.stop(); toast('Enregistrement arrêté.');
           if(btnRecord) btnRecord.classList.remove('hidden'); if(btnPause) btnPause.classList.add('hidden');
@@ -1099,6 +1112,7 @@
 
       /** Wrapper Fetch sécurisé pour Google Apps Script */
       async function fetchGAS(url, payload) {
+         // ... (fonction inchangée) ...
         if (!url || url === "À_RENSEIGNER") throw new Error("Backend URL non configurée.");
         try {
           const response = await fetch(url, {
@@ -1117,6 +1131,7 @@
 
       /** Convertit un Blob en Base64. */
       function blobToBase64(blob) {
+         // ... (fonction inchangée) ...
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -1128,6 +1143,7 @@
 
       /** Appelle le backend pour transcrire l'audio. */
       async function transcribeAudio(audioBlob) {
+         // ... (fonction inchangée) ...
         try {
           setStatus('Conversion audio...'); const fileBase64 = await blobToBase64(audioBlob);
           setStatus('Transcription en cours...');
@@ -1155,6 +1171,7 @@
 
       /** Envoie la réponse finale. */
       async function submitOne() {
+         // ... (fonction inchangée) ...
         if (sending || !audioBlob) return; 
         
         sending = true; setStatus('Envoi en cours…'); updateSendState(); toast('Envoi de votre réponse...');
