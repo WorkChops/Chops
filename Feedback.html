@@ -280,7 +280,7 @@
         </fieldset>
 
         <div class="text-right pt-2">
-          <button id="saveProfileBtn" type="submit" class="btn btn-primary">Valider et commencer</button>
+          <button id="saveProfileBtn" type="button" class="btn btn-primary">Valider et commencer</button>
         </div>
       </form>
     </div>
@@ -517,8 +517,7 @@
       /**
        * Gère la soumission du formulaire de profil.
        */
-      metaForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+      saveProfileBtn.addEventListener('click', () => {
         const studentCode = $('#studentCode').value.trim();
         const cohort = $('#cohort').value.trim();
         const consent = $('#consent').checked;
