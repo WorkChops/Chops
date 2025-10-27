@@ -555,7 +555,24 @@
       // ------------------------------------
       // Initialisation du profil
       // ------------------------------------
-      
+      /**
+       * Gère la suspension de l'AudioContext par le navigateur
+       * lorsque l'onglet devient inactif.
+       */
+      document.addEventListener("visibilitychange", () => {
+        // Si on n'a pas d'AudioContext (pas d'enregistrement) ou s'il est déjà fermé
+        if (!audioContext || audioContext.state === 'closed') {
+          return;
+        }
+
+        if (document.visibilityState === 'visible') {
+          // L'utilisateur est revenu sur l'onglet
+          console.log("Tab is visible, resuming AudioContext...");
+          audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext", e));
+        }
+        // Pas besoin de 'else' (suspendre) car le navigateur le fait déjà
+        // et le forcer pourrait arrêter le MediaRecorder.
+      });
       /**
        * Charge le profil depuis le LS et remplit le formulaire.
        * Affiche la modale si le profil n'est pas valide.
@@ -1037,6 +1054,11 @@
             if(btnRecord) btnRecord.disabled = true; if(btnStop) btnStop.disabled = true;
             
             transcribeAudio(audioBlob); 
+            
+            if ($('#controlsWrap')) $('#controlsWrap').classList.add('hidden'); // <-- AJOUTEZ CETTE LIGNE
+            updateSendState();
+            
+            mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
             
             updateSendState();
             
