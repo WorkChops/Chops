@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale-1">
   <link id="favicon" rel="icon" href="./assets/favicon.png">
 
   <!-- =================================================================================== -->
@@ -14,12 +14,11 @@
      */
     window.APP_CONFIG = {
       // --- Backend URL ---
-      // CORRECTION: Assurez-vous que c'est la bonne URL de votre Script A (Receiver) déployé
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbxRz2Od1d82fQfik128ijnuCJ4LWkRWDMW8lKZqqt9HX52NINWXoU-LcfuJo7tzENY/exec", // VOTRE URL RECEIVER
 
       // --- Branding ---
       BRAND: {
-        TITLE: "Feedback CHOPS v21", // Gardé votre titre
+        TITLE: "Feedback CHOPS v21", 
         LOGO_URL: "./CHOPStandard.svg",
         MARK_URL: "./CHOPiBasic.svg",
         FAVICON_URL: "./CHOPiBasic.svg"
@@ -94,7 +93,7 @@
 
   <main id="mainContent" class="max-w-5xl mx-auto p-4 space-y-6 opacity-0 transition-opacity duration-500">
       <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <!-- Les cartes -->
+          <!-- Les cartes de questions seront injectées ici -->
       </div>
   </main>
 
@@ -146,12 +145,11 @@
               <button id="btnPause" type="button" class="btn btn-pause w-full sm:w-auto hidden"> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3.5A1.5 1.5 0 017 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5zM12.5 3.5A1.5 1.5 0 0114 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5z" clip-rule="evenodd" /></svg> Pause </span> </button>
               <button id="btnResume" type="button" class="btn btn-record w-full sm:w-auto hidden"> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" /><path d="M5.5 8.5a.5.5 0 011 0V10a2 2 0 104 0V8.5a.5.5 0 011 0v1.5a3 3 0 11-6 0V8.5z" /><path d="M9 14a1 1 0 001 1h0a1 1 0 001-1v-1a1 1 0 00-1-1h0a1 1 0 00-1 1v1z" /></svg> Reprendre </span> </button>
               <button id="btnStop" type="button" class="btn btn-secondary w-full sm:w-auto hidden" disabled> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5v7a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 015 10.5v-7z" clip-rule="evenodd" /></svg> Stop </span> </button>
-              <!-- Ajout de la fonction hhmmss pour afficher la limite max -->
               <div class="flex-1 w-full pt-2 sm:pt-0"> <div class="h-2 rounded-full bg-white/60 overflow-hidden"><div id="meter" class="h-2 bg-green-500 transition-all duration-75 rounded-full" style="width:0%"></div></div> <p id="timerWrap" class="mt-1 text-xs text-gray-600 text-right"><span id="timer">00:00</span> / 00:00</p> </div>
           </div>
           <div id="previewWrap" class="hidden space-y-4">
               <button id="btnReRecord" type="button" class="btn btn-secondary btn-sm"> ↺ Réenregistrer </button>
-              <audio id="player" controls controlsList="nodownload noplaybackrate" class="w-full rounded-full"></audio> <!-- Ajout border-radius + controlsList -->
+              <audio id="player" controls controlsList="nodownload noplaybackrate" class="w-full rounded-full"></audio>
               <p id="fileInfo" class="mt-1 text-xs text-gray-500"></p>
           </div>
       </div>
@@ -174,7 +172,6 @@
     /* ============================== NOTIFICATIONS (TOASTS) =========================== */
     /* =================================================================================== */
     
-    // FONCTION COMPLÉTÉE
     function toast(msg, type = 'info') {
       const w = $('#toasts');
       if (!w) return;
@@ -205,7 +202,6 @@
     /* ============================= GESTION DU LOCAL STORAGE ========================== */
     /* =================================================================================== */
 
-    // FONCTIONS COMPLÉTÉES
     const LS_KEYS = {
       META: 'chops_voiceform_meta',
       STATUS_PREFIX: 'chops_voiceform_status_'
@@ -240,7 +236,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log("DOM Chargé, initialisation...");
 
-      // --- Sélecteurs principaux (ajout profileSpinner) ---
+      // --- Sélecteurs principaux ---
       const profileModal = $('#profileModal');
       const metaForm = $('#metaForm');
       const saveProfileBtn = $('#saveProfileBtn');
@@ -256,27 +252,29 @@
       const progressText = $('#progressText');
       const progressPct = $('#progressPct');
       const progressBar = $('#progressBar');
-      const profileSpinner = $('#profileSpinner'); // NOUVEAU
+      const profileSpinner = $('#profileSpinner'); 
       
       if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner) {
-          console.error("Éléments UI principaux manquants ! Vérifiez les IDs HTML.");
+          console.error("Éléments UI principaux manquants !");
           toast("Erreur critique: Interface incomplète.", "err");
           return;
       }
 
       // --- État de l'application ---
-      // (repris de l'ancien, car '...' dans le nouveau)
       let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
+      // currentStatus peut contenir:
+      // { topic1: { done: true, at: '...', durationSec: 30 } }
+      // { topic2: { sending: true } }
+      // { topic3: { failed: true } }
       let currentStatus = {};
       let topics = [];
       let currentTopic = null;
       let lastTrigger = null;
-      let sending = false;
+      let sendingDebounce = false; // Anti-double-clic sur "Envoyer"
       let currentAnimatedPct = 0;
       let isSubmittingProfile = false;
 
-
-      // --- Branding (repris de l'ancien) ---
+      // --- Branding ---
       try {
         const brandTitleText = CONFIG.BRAND.TITLE || "Feedback App";
         document.title = brandTitleText; 
@@ -286,15 +284,9 @@
         if ($('#favicon')) $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
       } catch (e) {
           console.error("Erreur configuration Branding:", e);
-          toast("Erreur chargement branding.", "warn");
       }
 
-      // --- Gestion visibilité (repris de l'ancien) ---
-      document.addEventListener("visibilitychange", () => {
-        // Logique audioContext... (on le remettra dans startRecording)
-      });
-      
-      // --- FONCTION hhmmss (placée plus haut pour être dispo partout) ---
+      // --- FONCTION hhmmss ---
       function hhmmss(s) {
         const sec = Math.max(0, Math.floor(s));
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
@@ -304,12 +296,13 @@
       if ($('#timerWrap')) $('#timerWrap').textContent = `00:00 / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
 
 
-      // --- Initialisation du profil (Version 'new', complète) ---
+      // --- Initialisation du profil ---
       function initProfile() {
         console.log("Initialisation du profil...");
         const meta = loadMeta();
-        if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true) {
-          console.log("Profil trouvé:", meta);
+        // Vérifie si l'ID de dossier est présent (important depuis la v2)
+        if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true && meta.userFolderDriveId) {
+          console.log("Profil valide (avec ID dossier) trouvé:", meta);
           currentMeta = meta;
           $('#studentCode').value = meta.studentCode;
           $('#cohort').value = meta.cohort;
@@ -322,9 +315,8 @@
           editProfileBtn.classList.remove('hidden');
           currentStatus = loadStatus(currentMeta.studentCode);
           renderAllCards();
-          console.log("Profil valide, affichage des cartes.");
         } else {
-          console.log("Profil invalide ou absent, affichage de la modale.");
+          console.log("Profil invalide ou ID dossier manquant, affichage de la modale.");
           profileModal.classList.remove('hidden');
           mainContent.classList.add('opacity-0');
           editProfileBtn.classList.add('hidden');
@@ -332,7 +324,7 @@
         }
       }
 
-      // --- Gestionnaire soumission formulaire profil (Version 'new', AVEC ensureUserFolder) ---
+      // --- Gestionnaire soumission formulaire profil ---
       metaForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (isSubmittingProfile) return;
@@ -348,7 +340,6 @@
         const profile = $('#profile').value;
         const used = $('#used').value;
 
-        // Validation
         if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
            toast('Identifiant invalide (lettres, chiffres, _, -).', 'warn');
            isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
@@ -362,37 +353,28 @@
            isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
         }
         
-         // Sauvegarde locale
+        // 1. Sauvegarde locale (provisoire, sans ID dossier)
         currentMeta = { studentCode, cohort, profile, used, consent: true };
-        saveMeta(currentMeta);
-        currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
         
         try {
-          // APPEL ANTICIPÉ AU BACKEND
+          // 2. Appel au backend pour créer/récupérer dossier
           console.log('Appel ensureUserFolder...');
-          const folderPayload = {
-            action: "ensureUserFolder",
-            studentCode, cohort, profile, used
-          };
-          
+          const folderPayload = { action: "ensureUserFolder", studentCode, cohort, profile, used };
           const folderJson = await fetchGAS(CONFIG.WEBAPP_URL, folderPayload);
           
           if (folderJson.ok === false) {
             throw new Error(folderJson.error || 'Erreur création dossier.');
           }
-          
-          // NOUVEAU: Sauvegarder l'ID du dossier reçu du backend
           if (!folderJson.userFolderDriveId) {
-            console.error("Erreur: Le backend n'a pas renvoyé userFolderDriveId");
             throw new Error("Réponse backend invalide (ID dossier manquant).");
           }
           
-          currentMeta.userFolderDriveId = folderJson.userFolderDriveId; // Sauvegarder dans l'état
-          saveMeta(currentMeta); // Sauvegarder DÉFINITIVEMENT dans localStorage
-
+          // 3. Succès : Sauvegarde finale avec l'ID dossier
+          currentMeta.userFolderDriveId = folderJson.userFolderDriveId;
+          saveMeta(currentMeta); // Sauvegarde complète
+          currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
           console.log(`Dossier Drive OK. ID sauvegardé: ${currentMeta.userFolderDriveId}`);
           
-          // Succès
           profileModal.classList.add('hidden');
           renderAllCards();
           mainContent.classList.remove('opacity-0');
@@ -411,19 +393,15 @@
         }
       });
 
-      // --- Bouton editProfile (repris de l'ancien) ---
+      // --- Bouton editProfile ---
       if (editProfileBtn) {
           editProfileBtn.addEventListener('click', () => {
-            $('#studentCode').value = currentMeta.studentCode;
-            $('#cohort').value = currentMeta.cohort;
-            $('#profile').value = currentMeta.profile;
-            $('#used').value = currentMeta.used;
-            $('#consent').checked = currentMeta.consent;
+            // Force la re-saisie pour recréer/vérifier l'ID dossier au cas où
             profileModal.classList.remove('hidden');
           });
       }
 
-      // --- Rendu des cartes et progression (repris de l'ancien) ---
+      // --- Rendu des cartes et progression (MODIFIÉ) ---
       function getQuestion(profile, topic) {
         try {
            let effectiveProfile = profile || 'autre';
@@ -433,7 +411,6 @@
                questions = CONFIG.QUESTIONS['autre'];
            }
            if (!questions || !questions.hasOwnProperty(topic)) {
-               console.error(`Question manquante pour topic '${topic}', même dans 'autre'.`);
                return "[Question manquante]";
            }
            return questions[topic];
@@ -448,13 +425,11 @@
         let profileQuestions = CONFIG.QUESTIONS[effectiveProfile];
 
         if (!profileQuestions || typeof profileQuestions !== 'object') {
-            console.warn(`Profil '${effectiveProfile}' non trouvé, fallback sur 'autre'.`);
             effectiveProfile = 'autre';
             profileQuestions = CONFIG.QUESTIONS['autre'];
         }
         
         if (!profileQuestions || typeof profileQuestions !== 'object') {
-          console.error("Config questions invalide: 'autre' manque ou n'est pas un objet.");
           topics = [];
           if (cardsGrid) cardsGrid.innerHTML = '<p class="text-red-600 text-center col-span-full">Erreur: Configuration des questions invalide.</p>';
           updateProgress(); 
@@ -462,24 +437,47 @@
         }
 
         topics = Object.keys(profileQuestions);
-        console.log(`Utilisation profil '${effectiveProfile}', Topics:`, topics);
-
+        
         if (topics.length === 0) {
-           console.error("Aucune question définie.");
            if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question configurée.</p>';
         } else {
            if (cardsGrid) cardsGrid.innerHTML = ''; 
            
            topics.forEach(topic => {
+             // MODIFIÉ: Gère les 3 états (done, sending, failed)
              const entry = currentStatus[topic];
              const done = !!entry?.done;
+             const sending = !!entry?.sending;
+             const failed = !!entry?.failed;
              const questionText = getQuestion(effectiveProfile, topic);
              
              const card = document.createElement('button');
              card.type = 'button';
              card.dataset.topic = topic;
-             // Utilisation de la classe 'glass-bubble' définie dans le CSS du 'new'
-             card.className = `glass-bubble w-full text-left p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
+             card.className = `glass-bubble w-full text-left p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 
+                              ${done ? 'opacity-70 hover:opacity-100' : ''} 
+                              ${sending ? 'opacity-50 cursor-not-allowed' : ''}
+                              ${failed ? 'border-red-400 hover:border-red-500' : ''}`;
+             
+             if (sending) card.disabled = true; // Désactive la carte pendant l'envoi
+
+             // MODIFIÉ: Logique du badge de statut
+             let statusBadge = '';
+             if (sending) {
+                 statusBadge = `<span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center gap-1">
+                                 <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                                 Envoi...
+                              </span>`;
+             } else if (failed) {
+                 statusBadge = `<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium flex items-center gap-1">
+                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15h.006a1.75 1.75 0 001.746-1.63l-.46-2.065a.25.25 0 01.244-.305H13a.75.75 0 000-1.5H9z" clip-rule="evenodd" /></svg>
+                                 Échec
+                               </span>`;
+             } else if (done) {
+                 statusBadge = `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`;
+             } else {
+                 statusBadge = `<span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">À faire</span>`;
+             }
              
              card.innerHTML = `
                <div class="flex items-center justify-between">
@@ -487,13 +485,11 @@
                    <img src="${CONFIG.BRAND.MARK_URL}" alt="" class="h-5 w-5">
                    ${topic.charAt(0).toUpperCase() + topic.slice(1)} 
                  </span>
-                 ${done
-                   ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`
-                   : `<span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">À faire</span>`
-                 }
+                 ${statusBadge}
                </div>
                <p class="text-sm text-gray-800">${questionText}</p>
                ${done && entry.at ? `<p class="text-xs text-gray-500 pt-2">Répondu le ${new Date(entry.at).toLocaleDateString()}</p>` : ''}
+               ${failed ? `<p class="text-xs text-red-600 pt-2">L'envoi a échoué. Cliquez pour réessayer.</p>` : ''}
              `;
              
              card.addEventListener('click', () => openModal(topic, card));
@@ -539,7 +535,7 @@
       }
       
       // ------------------------------------
-      // Logique de la Modale d'Enregistrement (repris de l'ancien)
+      // Logique de la Modale d'Enregistrement
       // ------------------------------------
       
       const btnRecord = $('#btnRecord');
@@ -551,7 +547,7 @@
       
       const meterBar = $('#meter');
       const timerEl = $('#timer');
-      const timerWrap = $('#timerWrap'); // Référence au conteneur du timer
+      const timerWrap = $('#timerWrap');
       const player = $('#player');
       const previewWrap = $('#previewWrap');
       const fileInfo = $('#fileInfo');
@@ -561,9 +557,23 @@
       let timerInterval = null;
       let audioContext, analyser, dataArray;
       
+      // MODIFIÉ: Gère les états "sending" et "failed"
       function openModal(topic, trigger) {
-        if (sending) { toast('Envoi en cours...', 'warn'); return; }
-        if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
+        // Vérifie si ce sujet est en cours d'envoi
+        if (currentStatus[topic]?.sending) {
+           toast('Envoi en cours pour ce sujet...', 'warn');
+           return; 
+        }
+
+        // Si l'envoi a échoué, on réinitialise l'état pour retenter
+        if (currentStatus[topic]?.failed) {
+            delete currentStatus[topic].failed;
+            // Ne pas sauvegarder, l'état "failed" n'est que temporaire
+            // saveStatus(currentMeta.studentCode, currentStatus);
+            renderAllCards(); // Met à jour l'UI pour retirer "Échec"
+        }
+
+        if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort || !currentMeta.userFolderDriveId) {
            toast('Veuillez valider votre profil.', 'warn');
            profileModal.classList.remove('hidden'); 
            return;
@@ -588,9 +598,9 @@
         mediaStream?.getTracks().forEach(track => track.stop());
         recordModal.classList.add('hidden'); 
         if (lastTrigger) lastTrigger.focus();
+        currentTopic = null; // Important
       }
       
-      // Listeners modale (repris de l'ancien)
       if (modalClose) modalClose.addEventListener('click', closeModal);
       if (recordModal) recordModal.addEventListener('click', (e) => {
         if (e.target === recordModal) closeModal();
@@ -604,22 +614,22 @@
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
       
       function updateSendState() {
-        const canSend = currentMeta.consent && !!audioBlob && !sending;
+        // MODIFIÉ: N'utilise plus la variable globale 'sending', mais l'anti-double-clic
+        const canSend = currentMeta.consent && !!audioBlob && !sendingDebounce;
         if (btnSend) {
             btnSend.disabled = !canSend;
             btnSend.classList.toggle('btn-disabled', !canSend);
         }
       }
 
-      /** Réinitialise l'interface d'enregistrement (repris de l'ancien) */
       function resetRecording(inModal = false) {
         mediaStream?.getTracks().forEach(t => t.stop());
         mediaStream = null;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant recorder"); }
+          try { mediaRecorder.stop(); } catch(e) {}
         }
         mediaRecorder = null;
-        audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
+        audioContext?.close().catch(e => {});
         audioContext = null;
         
         clearInterval(timerInterval); timerInterval = null;
@@ -633,8 +643,9 @@
           if(previewWrap) previewWrap.classList.add('hidden');
           if ($('#controlsWrap')) $('#controlsWrap').classList.remove('hidden');
           
+          const maxTime = hhmmss(CONFIG.LIMITS.MAX_SECONDS);
           if(timerEl) timerEl.textContent = '00:00';
-          if(timerWrap) timerWrap.textContent = `00:00 / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+          if(timerWrap) timerWrap.textContent = `00:00 / ${maxTime}`;
           if(meterBar) meterBar.style.width = '0%';
           
           if(btnRecord) btnRecord.classList.remove('hidden');
@@ -649,7 +660,7 @@
         }
       }
 
-      // --- Logique d'enregistrement (repris de l'ancien) ---
+      // --- Logique d'enregistrement (Inchangée) ---
       
       if(btnRecord) btnRecord.addEventListener('click', startRecording);
       if(btnPause) btnPause.addEventListener('click', pauseRecording);
@@ -664,7 +675,6 @@
             audio: { noiseSuppression: true, echoCancellation: true } 
           });
         } catch (err) {
-          console.error("Erreur getUserMedia:", err);
           let errorMsg = 'Erreur: Micro refusé/non trouvé.';
           if (err.name === 'NotAllowedError') errorMsg = 'Autorisation micro requise.';
           else if (err.name === 'NotFoundError') errorMsg = 'Aucun micro trouvé.';
@@ -674,15 +684,14 @@
         try {
           audioContext = new (window.AudioContext || window.webkitAudioContext)();
           
-          // Reprise du contexte si suspendu (ex: changement d'onglet)
           document.addEventListener("visibilitychange", () => {
             if (!audioContext || audioContext.state === 'closed') return;
             if (document.visibilityState === 'visible') {
-              audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext", e));
+              audioContext.resume().catch(e => {});
             }
           });
           if (audioContext.state === 'suspended') {
-             audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext (initial)", e));
+             audioContext.resume().catch(e => {});
           }
 
           analyser = audioContext.createAnalyser();
@@ -711,12 +720,13 @@
             timerInterval = setInterval(() => {
               const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
               const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
+              const maxTime = hhmmss(CONFIG.LIMITS.MAX_SECONDS);
               
               if(timerEl) timerEl.textContent = hhmmss(sec);
-              if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+              if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${maxTime}`;
               
               if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
-                stopRecording(); toast(`Temps max (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
+                stopRecording(); toast(`Temps max (${maxTime}) atteint.`, 'warn');
               }
               
               if (analyser && dataArray && meterBar) {
@@ -755,7 +765,7 @@
             updateSendState();
             
             mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
-            audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext tardive")); audioContext = null;
+            audioContext?.close().catch(e => {});
           };
 
           mediaRecorder.onerror = (event) => {
@@ -793,8 +803,9 @@
           timerInterval = setInterval(() => {
             const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
             const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
+            const maxTime = hhmmss(CONFIG.LIMITS.MAX_SECONDS);
             if(timerEl) timerEl.textContent = hhmmss(sec);
-            if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+            if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${maxTime}`;
             
             if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
             
@@ -812,7 +823,7 @@
         if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
           mediaRecorder.stop(); toast('Enregistrement arrêté.');
           
-          if(btnRecord) btnRecord.classList.remove('hidden'); // S'affiche via resetRecording
+          if(btnRecord) btnRecord.classList.remove('hidden');
           if(btnPause) btnPause.classList.add('hidden');
           if(btnResume) btnResume.classList.add('hidden');
           if(btnStop) btnStop.classList.add('hidden');
@@ -822,33 +833,28 @@
       }
 
       // ------------------------------------
-      // Logique d'Envoi et API (Version 'new', complète)
+      // Logique d'Envoi et API (MODIFIÉE)
       // ------------------------------------
 
       async function fetchGAS(url, payload) {
-        // Validation de l'URL
         if (!url || !url.startsWith("https://script.google.com")) {
             throw new Error("Backend URL invalide ou non configurée.");
         }
         try {
           const response = await fetch(url, {
             method: 'POST', mode: 'cors', credentials: 'omit',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // GAS recommande text/plain pour doPost
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload), redirect: 'follow'
           });
           
           if (!response.ok) {
             let errorText = `Erreur réseau: ${response.statusText} (${response.status})`;
             try {
-              // Tenter de lire la réponse d'erreur JSON
               const errJson = await response.json();
               if (errJson?.error) errorText = `Erreur backend: ${errJson.error}`;
-            } catch(e) {
-              // Ignorer si ce n'est pas du JSON
-            }
+            } catch(e) {}
             throw new Error(errorText);
           }
-          // Si OK, on attend la réponse JSON
           return response.json(); 
         } catch (err) {
           console.error("Erreur fetchGAS:", err);
@@ -875,100 +881,89 @@
 
       if(btnSend) btnSend.addEventListener('click', submitOne);
 
-      /** Envoie la réponse finale (Version 'new', complète). */
+      /** MODIFIÉ: Envoie la réponse en arrière-plan. */
       async function submitOne() {
-         if (sending || !audioBlob) return;
+         // Utilise 'sendingDebounce' pour éviter le double-clic
+         if (sendingDebounce || !audioBlob) return;
          
-         sending = true;
+         sendingDebounce = true;
          setStatus('Préparation envoi...');
-         if (modalClose) modalClose.disabled = true;
-         if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
-         updateSendState();
-         toast('Envoi de votre réponse...');
+         updateSendState(); // Désactive le bouton Envoyer
          
          try {
-           const fileBase64 = await blobToBase64(audioBlob);
+           // 1. Préparation rapide (synchrone)
+           const fileBase64 = await blobToBase64(audioBlob); // C'est rapide
            const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
            const durationSec = (mm * 60 + ss) || 0;
-
+           
+           // Sauvegarde les variables avant de fermer la modale
+           const topicToUpdate = currentTopic;
            const payload = {
              action: "uploadAudio",
              ...currentMeta,
-             topic: currentTopic,
+             topic: topicToUpdate,
              durationSec: durationSec,
-             mimeType: mimeType, // La variable globale mimeType
-             transcription: "[CLIENT_TRANSCRIPTION_DISABLED]", // Placeholder
+             mimeType: mimeType,
+             transcription: "[CLIENT_TRANSCRIPTION_DISABLED]",
              fileBase64: fileBase64,
              clientUA: navigator.userAgent
            };
 
-           console.log("----------------------------------------");
-           console.log("Frontend: Envoi du payload 'uploadAudio' à", CONFIG.WEBAPP_URL);
-           console.log("MimeType envoyé:", payload.mimeType);
-           // AJOUT: Log pour vérifier que l'ID est bien envoyé
-           console.log("userFolderDriveId envoyé:", payload.userFolderDriveId);
+           // 2. Mise à jour IMMÉDIATE de l'interface
+           currentStatus[topicToUpdate] = { sending: true };
+           renderAllCards(); // Affiche "Envoi en cours..." sur la carte
+           toast('Envoi de votre réponse...');
+           closeModal(); // Ferme la modale IMMÉDIATEMENT
            
-           setStatus('Envoi en cours...');
-           
-           // APPEL HTTP
-           const response = await fetch(CONFIG.WEBAPP_URL, {
-             method: 'POST', mode: 'cors', credentials: 'omit',
-             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-             body: JSON.stringify(payload), redirect: 'follow'
-           });
+           // 3. Lancement de la tâche de fond (ne pas "await" ici)
+           runUploadTask(payload, topicToUpdate, durationSec);
 
-           // GESTION RÉPONSE HTTP 
-           if (!response.ok) {
-             let errorText = `Erreur réseau ${response.status}: ${response.statusText}`;
-             try {
-               const bodyText = await response.text();
-               console.error("Réponse d'erreur brute du backend:", bodyText);
-               const errJson = JSON.parse(bodyText);
-               if (errJson && errJson.error) {
-                 errorText = errJson.error;
-               } else if (bodyText) {
-                 errorText = bodyText.slice(0, 100);
-               }
-             } catch(e) {
-               console.warn("Impossible lire/parser erreur");
-             }
-             throw new Error(errorText); // Lance l'erreur vers le catch
-           }
-           
-           // Si HTTP 200 OK (même si le JSON interne dit {ok: false})
-           // On vérifie le JSON reçu
-           const jsonResult = await response.json();
-           if (jsonResult.ok === false) {
-                // Erreur logique renvoyée par le script (ex: "Audio manquant")
-                throw new Error(jsonResult.error || "Erreur inconnue du backend.");
-           }
-
-           // --- SUCCÈS TOTAL ---
-           console.log("Frontend: Communication backend OK (HTTP 200 et json.ok=true).");
-           setStatus('Terminé ✅');
-           toast('Réponse envoyée !', 'ok');
-           
-           // Mise à jour locale
-           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
-           saveStatus(currentMeta.studentCode, currentStatus);
-           renderAllCards();
-           
          } catch (err) {
-           // Attrape les erreurs (blob, fetch, !response.ok, json.ok=false)
-           console.error('Erreur finale submitOne:', err);
-           toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
-           setStatus('Erreur d’envoi');
-           
+           // Erreur pendant la préparation (ex: blobToBase64)
+           console.error('Erreur préparation submitOne:', err);
+           toast(`Erreur préparation : ${err.message}. Réessayez.`, 'err');
+           setStatus('Erreur préparation');
+           // Si la modale est encore ouverte, réinitialise l'état
+           if (currentTopic) {
+             delete currentStatus[currentTopic].sending;
+             renderAllCards();
+           }
          } finally {
-           // S'exécute TOUJOURS (succès ou erreur)
-           sending = false;
-           if (modalClose) modalClose.disabled = false;
-           if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
-           updateSendState();
-           console.log("------------------- submitOne terminé --------------------");
-           closeModal(); // Ferme TOUJOURS la modale
+           // Libère le verrou anti-double-clic
+           sendingDebounce = false;
+           updateSendState(); // Ré-active le bouton (si la modale était restée ouverte)
          }
       } // Fin submitOne
+
+      /** NOUVEAU: Fonction qui gère l'envoi en arrière-plan */
+      async function runUploadTask(payload, topic, durationSec) {
+          const topicLabel = `"${topic.charAt(0).toUpperCase() + topic.slice(1)}"`;
+          console.log(`[BG Task ${topic}] Démarrage envoi...`);
+
+          try {
+              // 1. Exécute le fetch (c'est la partie lente)
+              const jsonResult = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+
+              if (jsonResult.ok === false) {
+                  throw new Error(jsonResult.error || "Erreur inconnue du backend.");
+              }
+
+              // 2. SUCCÈS
+              console.log(`[BG Task ${topic}] Succès.`);
+              currentStatus[topic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
+              saveStatus(currentMeta.studentCode, currentStatus);
+              renderAllCards(); // Met à jour la carte en "Répondu"
+              toast(`Réponse pour ${topicLabel} envoyée !`, 'ok');
+
+          } catch (err) {
+              // 3. ÉCHEC
+              console.error(`[BG Task ${topic}] Échec:`, err);
+              currentStatus[topic] = { failed: true }; // Nouvel état "failed"
+              saveStatus(currentMeta.studentCode, currentStatus); // Sauvegarde l'échec pour info
+              renderAllCards(); // Met à jour la carte en "Échec"
+              toast(`Erreur pour ${topicLabel}: ${err.message}`, 'err');
+          }
+      }
       
       // --- Démarrage ---
       initProfile(); // Lancer l'initialisation
