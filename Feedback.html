@@ -146,7 +146,8 @@
               <button id="btnPause" type="button" class="btn btn-pause w-full sm:w-auto hidden"> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3.5A1.5 1.5 0 017 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5zM12.5 3.5A1.5 1.5 0 0114 5v10a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5z" clip-rule="evenodd" /></svg> Pause </span> </button>
               <button id="btnResume" type="button" class="btn btn-record w-full sm:w-auto hidden"> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" /><path d="M5.5 8.5a.5.5 0 011 0V10a2 2 0 104 0V8.5a.5.5 0 011 0v1.5a3 3 0 11-6 0V8.5z" /><path d="M9 14a1 1 0 001 1h0a1 1 0 001-1v-1a1 1 0 00-1-1h0a1 1 0 00-1 1v1z" /></svg> Reprendre </span> </button>
               <button id="btnStop" type="button" class="btn btn-secondary w-full sm:w-auto hidden" disabled> <span class="flex items-center justify-center gap-2"> <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5v7a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 015 10.5v-7z" clip-rule="evenodd" /></svg> Stop </span> </button>
-              <div class="flex-1 w-full pt-2 sm:pt-0"> <div class="h-2 rounded-full bg-white/60 overflow-hidden"><div id="meter" class="h-2 bg-green-500 transition-all duration-75 rounded-full" style="width:0%"></div></div> <p class="mt-1 text-xs text-gray-600 text-right"><span id="timer">00:00</span> / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}</p> </div>
+              <!-- Ajout de la fonction hhmmss pour afficher la limite max -->
+              <div class="flex-1 w-full pt-2 sm:pt-0"> <div class="h-2 rounded-full bg-white/60 overflow-hidden"><div id="meter" class="h-2 bg-green-500 transition-all duration-75 rounded-full" style="width:0%"></div></div> <p id="timerWrap" class="mt-1 text-xs text-gray-600 text-right"><span id="timer">00:00</span> / 00:00</p> </div>
           </div>
           <div id="previewWrap" class="hidden space-y-4">
               <button id="btnReRecord" type="button" class="btn btn-secondary btn-sm"> ↺ Réenregistrer </button>
@@ -162,101 +163,807 @@
   </div>
 
   <script>
-    // ... CONFIG, $, toast, localStorage inchangés ...
-    const CONFIG = window.APP_CONFIG || {}; const $ = (selector) => document.querySelector(selector); function toast(msg, type = 'info') { /* ... */ } const LS_KEYS = { META: '...', STATUS_PREFIX: '...' }; function saveMeta(meta) { /* ... */ } function loadMeta() { /* ... */ } function saveStatus(studentId, status) { /* ... */ } function loadStatus(studentId) { /* ... */ }
+    // Configuration globale chargée depuis le <head>
+    const CONFIG = window.APP_CONFIG || {};
+
+    // Micro-fonction de sélection
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => document.querySelectorAll(selector);
+
+    /* =================================================================================== */
+    /* ============================== NOTIFICATIONS (TOASTS) =========================== */
+    /* =================================================================================== */
+    
+    // FONCTION COMPLÉTÉE
+    function toast(msg, type = 'info') {
+      const w = $('#toasts');
+      if (!w) return;
+      const d = document.createElement('div');
+      let c = 'bg-gray-700'; // info
+      if (type === 'ok') c = 'bg-green-600';
+      if (type === 'warn') c = 'bg-amber-500';
+      if (type === 'err') c = 'bg-red-600';
+      
+      d.className = `${c} text-white rounded-xl px-4 py-3 mb-2 shadow-lg text-sm font-medium transition-all duration-300 transform translate-x-full opacity-0`;
+      d.textContent = msg;
+      w.appendChild(d);
+      
+      requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+              d.classList.remove('translate-x-full', 'opacity-0');
+              d.classList.add('translate-x-0', 'opacity-100');
+          });
+      });
+
+      setTimeout(() => {
+        d.classList.add('translate-x-full', 'opacity-0');
+        d.addEventListener('transitionend', () => d.remove(), { once: true });
+      }, 3500);
+    }
+
+    /* =================================================================================== */
+    /* ============================= GESTION DU LOCAL STORAGE ========================== */
+    /* =================================================================================== */
+
+    // FONCTIONS COMPLÉTÉES
+    const LS_KEYS = {
+      META: 'chops_voiceform_meta',
+      STATUS_PREFIX: 'chops_voiceform_status_'
+    };
+
+    function saveMeta(meta) {
+      try { localStorage.setItem(LS_KEYS.META, JSON.stringify(meta)); } 
+      catch (e) { console.error("Erreur sauvegarde localStorage (meta):", e); toast("Impossible de sauvegarder le profil.", "err"); }
+    }
+    
+    function loadMeta() {
+      try { return JSON.parse(localStorage.getItem(LS_KEYS.META) || '{}'); } 
+      catch (e) { console.error("Erreur chargement localStorage (meta):", e); return {}; }
+    }
+
+    function saveStatus(studentId, status) {
+      if (!studentId) return;
+      try { localStorage.setItem(LS_KEYS.STATUS_PREFIX + studentId, JSON.stringify(status)); } 
+      catch (e) { console.error("Erreur sauvegarde localStorage (status):", e); toast("Impossible de sauvegarder la progression.", "err"); }
+    }
+
+    function loadStatus(studentId) {
+      if (!studentId) return {};
+      try { return JSON.parse(localStorage.getItem(LS_KEYS.STATUS_PREFIX + studentId) || '{}'); } 
+      catch (e) { console.error("Erreur chargement localStorage (status):", e); return {}; }
+    }
+    
+    /* =================================================================================== */
+    /* =========================== LOGIQUE D'APPLICATION PRINCIPALE ====================== */
+    /* =================================================================================== */
 
     document.addEventListener('DOMContentLoaded', () => {
-      // ... Sélecteurs principaux (ajout profileSpinner) ...
-      const profileModal = $('#profileModal'); const metaForm = $('#metaForm'); const saveProfileBtn = $('#saveProfileBtn'); const editProfileBtn = $('#editProfileBtn'); const mainContent = $('#mainContent'); const cardsGrid = $('#cardsGrid'); const recordModal = $('#recordModal'); const modalClose = $('#modalClose'); const statusEl = $('#status'); const floatingProgress = $('#floatingProgress'); const progressText = $('#progressText'); const progressPct = $('#progressPct'); const progressBar = $('#progressBar'); const profileSpinner = $('#profileSpinner');
-      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner) { toast("Erreur UI.", "err"); return; }
+      console.log("DOM Chargé, initialisation...");
 
-      // ... État de l'application inchangé ...
-      let currentMeta = {/* ... */}; let currentStatus = {}; let topics = []; let currentTopic = null; let lastTrigger = null; let sending = false; let currentAnimatedPct = 0; let isSubmittingProfile = false;
+      // --- Sélecteurs principaux (ajout profileSpinner) ---
+      const profileModal = $('#profileModal');
+      const metaForm = $('#metaForm');
+      const saveProfileBtn = $('#saveProfileBtn');
+      const editProfileBtn = $('#editProfileBtn');
+      const mainContent = $('#mainContent');
+      const cardsGrid = $('#cardsGrid');
+      
+      const recordModal = $('#recordModal');
+      const modalClose = $('#modalClose');
+      const statusEl = $('#status');
+      
+      const floatingProgress = $('#floatingProgress');
+      const progressText = $('#progressText');
+      const progressPct = $('#progressPct');
+      const progressBar = $('#progressBar');
+      const profileSpinner = $('#profileSpinner'); // NOUVEAU
+      
+      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner) {
+          console.error("Éléments UI principaux manquants ! Vérifiez les IDs HTML.");
+          toast("Erreur critique: Interface incomplète.", "err");
+          return;
+      }
 
-      // ... Branding, visibilitychange, initProfile inchangés ...
-      try { /* ... branding ... */ } catch (e) { /* ... */ }
-      document.addEventListener("visibilitychange", () => { /* ... */ });
-      function initProfile() { /* ... chargé profil ou affiche modale ... */
+      // --- État de l'application ---
+      // (repris de l'ancien, car '...' dans le nouveau)
+      let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
+      let currentStatus = {};
+      let topics = [];
+      let currentTopic = null;
+      let lastTrigger = null;
+      let sending = false;
+      let currentAnimatedPct = 0;
+      let isSubmittingProfile = false;
+
+
+      // --- Branding (repris de l'ancien) ---
+      try {
+        const brandTitleText = CONFIG.BRAND.TITLE || "Feedback App";
+        document.title = brandTitleText; 
+        const brandTitleEl = $('#brandTitle');
+        if (brandTitleEl) brandTitleEl.textContent = brandTitleText;
+        if ($('#brandLogo')) $('#brandLogo').src = CONFIG.BRAND.LOGO_URL;
+        if ($('#favicon')) $('#favicon').href = CONFIG.BRAND.FAVICON_URL;
+      } catch (e) {
+          console.error("Erreur configuration Branding:", e);
+          toast("Erreur chargement branding.", "warn");
+      }
+
+      // --- Gestion visibilité (repris de l'ancien) ---
+      document.addEventListener("visibilitychange", () => {
+        // Logique audioContext... (on le remettra dans startRecording)
+      });
+      
+      // --- FONCTION hhmmss (placée plus haut pour être dispo partout) ---
+      function hhmmss(s) {
+        const sec = Math.max(0, Math.floor(s));
+        return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+      }
+      
+      // Initialiser le timer max dans l'UI
+      if ($('#timerWrap')) $('#timerWrap').textContent = `00:00 / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+
+
+      // --- Initialisation du profil (Version 'new', complète) ---
+      function initProfile() {
         console.log("Initialisation du profil...");
         const meta = loadMeta();
         if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true) {
-          console.log("Profil trouvé:", meta); currentMeta = meta; $('#studentCode').value = meta.studentCode; $('#cohort').value = meta.cohort; $('#profile').value = meta.profile; $('#used').value = meta.used; $('#consent').checked = meta.consent;
-          profileModal.classList.add('hidden'); mainContent.classList.remove('opacity-0'); editProfileBtn.classList.remove('hidden'); currentStatus = loadStatus(currentMeta.studentCode); renderAllCards(); console.log("Profil valide.");
+          console.log("Profil trouvé:", meta);
+          currentMeta = meta;
+          $('#studentCode').value = meta.studentCode;
+          $('#cohort').value = meta.cohort;
+          $('#profile').value = meta.profile;
+          $('#used').value = meta.used;
+          $('#consent').checked = meta.consent;
+          
+          profileModal.classList.add('hidden');
+          mainContent.classList.remove('opacity-0');
+          editProfileBtn.classList.remove('hidden');
+          currentStatus = loadStatus(currentMeta.studentCode);
+          renderAllCards();
+          console.log("Profil valide, affichage des cartes.");
         } else {
-          console.log("Profil invalide."); profileModal.classList.remove('hidden'); mainContent.classList.add('opacity-0'); editProfileBtn.classList.add('hidden'); updateProgress();
+          console.log("Profil invalide ou absent, affichage de la modale.");
+          profileModal.classList.remove('hidden');
+          mainContent.classList.add('opacity-0');
+          editProfileBtn.classList.add('hidden');
+          updateProgress();
         }
       }
 
-      // --- Gestionnaire soumission formulaire profil (AVEC ensureUserFolder) ---
+      // --- Gestionnaire soumission formulaire profil (Version 'new', AVEC ensureUserFolder) ---
       metaForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); if (isSubmittingProfile) return;
-        isSubmittingProfile = true; saveProfileBtn.disabled = true; saveProfileBtn.classList.add('btn-disabled'); profileSpinner.classList.remove('hidden');
-        const studentCode = $('#studentCode').value.trim(); const cohort = $('#cohort').value.trim(); const consent = $('#consent').checked; const profile = $('#profile').value; const used = $('#used').value;
-        // Validation (simplifiée pour lisibilité)
-        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode) || cohort.length < 1 || !consent) {
-           toast('Vérifiez les champs.', 'warn'); isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
+        e.preventDefault();
+        if (isSubmittingProfile) return;
+        
+        isSubmittingProfile = true;
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.classList.add('btn-disabled');
+        profileSpinner.classList.remove('hidden');
+        
+        const studentCode = $('#studentCode').value.trim();
+        const cohort = $('#cohort').value.trim();
+        const consent = $('#consent').checked;
+        const profile = $('#profile').value;
+        const used = $('#used').value;
+
+        // Validation
+        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) {
+           toast('Identifiant invalide (lettres, chiffres, _, -).', 'warn');
+           isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
+        }
+         if (cohort.length < 1) {
+           toast('Contexte requis.', 'warn');
+           isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
          }
-        currentMeta = { studentCode, cohort, profile, used, consent: true }; saveMeta(currentMeta); currentStatus = loadStatus(currentMeta.studentCode);
+        if (!consent) {
+           toast('Consentement requis.', 'warn');
+           isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
+        }
+        
+        // Sauvegarde locale
+        currentMeta = { studentCode, cohort, profile, used, consent: true };
+        saveMeta(currentMeta);
+        currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
+        
         try {
-          console.log('Appel ensureUserFolder...'); const folderPayload = { action: "ensureUserFolder", studentCode, cohort, profile, used };
+          // APPEL ANTICIPÉ AU BACKEND
+          console.log('Appel ensureUserFolder...');
+          const folderPayload = {
+            action: "ensureUserFolder",
+            studentCode, cohort, profile, used
+          };
+          
           const folderJson = await fetchGAS(CONFIG.WEBAPP_URL, folderPayload);
-          if (folderJson.ok === false) { throw new Error(folderJson.error || 'Erreur création dossier.'); }
+          
+          if (folderJson.ok === false) {
+            throw new Error(folderJson.error || 'Erreur création dossier.');
+          }
+          
           console.log('Dossier Drive OK.');
-          profileModal.classList.add('hidden'); renderAllCards(); mainContent.classList.remove('opacity-0'); editProfileBtn.classList.remove('hidden'); toast('Profil enregistré !', 'ok');
-        } catch (folderErr) { console.error('Erreur ensureUserFolder:', folderErr); toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
-        } finally { isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); }
+          
+          // Succès
+          profileModal.classList.add('hidden');
+          renderAllCards();
+          mainContent.classList.remove('opacity-0');
+          editProfileBtn.classList.remove('hidden');
+          toast('Profil enregistré !', 'ok');
+          
+        } catch (folderErr) {
+          console.error('Erreur ensureUserFolder:', folderErr);
+          toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
+          // Ne cache pas la modale, l'utilisateur doit pouvoir réessayer
+        } finally {
+          isSubmittingProfile = false;
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.classList.remove('btn-disabled');
+          profileSpinner.classList.add('hidden');
+        }
       });
 
-      // ... Bouton editProfile inchangé ...
-      if (editProfileBtn) { editProfileBtn.addEventListener('click', () => { /*...*/ }); }
+      // --- Bouton editProfile (repris de l'ancien) ---
+      if (editProfileBtn) {
+          editProfileBtn.addEventListener('click', () => {
+            $('#studentCode').value = currentMeta.studentCode;
+            $('#cohort').value = currentMeta.cohort;
+            $('#profile').value = currentMeta.profile;
+            $('#used').value = currentMeta.used;
+            $('#consent').checked = currentMeta.consent;
+            profileModal.classList.remove('hidden');
+          });
+      }
 
-      // ... Rendu cartes, progression, modale enregistrement, logique enregistrement (start/stop etc) INCHANGÉS ...
-      // (Ces fonctions sont longues mais correctes et n'ont pas besoin d'être modifiées)
-      function getQuestion(profile, topic) { /* ... */ } function renderAllCards() { /* ... */ } function updateProgress() { /* ... */ } function animateCounter(el, from, to, suffix = '') { /* ... */ }
-      const btnRecord = $('#btnRecord'); /* ... */ let mediaStream, mediaRecorder, audioBlob = null, mimeType = 'audio/webm'; /* ... */
-      function openModal(topic, trigger) { /* ... */ } function closeModal() { /* ... */ } /* ... listeners ... */ function setStatus(t) { /* ... */ } function hhmmss(s) { const sec = Math.max(0, Math.floor(s)); return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; } function updateSendState() { /* ... */ }
-      function resetRecording(inModal = false) { /* ... */ }
-      if(btnRecord) btnRecord.addEventListener('click', startRecording); /* ... listeners ... */
-      async function startRecording() { /* ... */ } function pauseRecording() { /* ... */ } function resumeRecording() { /* ... */ } function stopRecording() { /* ... */ }
+      // --- Rendu des cartes et progression (repris de l'ancien) ---
+      function getQuestion(profile, topic) {
+        try {
+           let effectiveProfile = profile || 'autre';
+           let questions = CONFIG.QUESTIONS[effectiveProfile];
+           if (!questions || !questions.hasOwnProperty(topic)) {
+               effectiveProfile = 'autre';
+               questions = CONFIG.QUESTIONS['autre'];
+           }
+           if (!questions || !questions.hasOwnProperty(topic)) {
+               console.error(`Question manquante pour topic '${topic}', même dans 'autre'.`);
+               return "[Question manquante]";
+           }
+           return questions[topic];
+        } catch (e) {
+          console.error(`Erreur getQuestion(${profile}, ${topic})`, e);
+          return "[Erreur question]";
+        }
+      }
+      
+      function renderAllCards() {
+        let effectiveProfile = currentMeta.profile || 'autre';
+        let profileQuestions = CONFIG.QUESTIONS[effectiveProfile];
 
-      // --- fetchGAS ET blobToBase64 --- (Inchangés)
-      async function fetchGAS(url, payload) { if (!url || !url.startsWith("https://script.google.com")) throw new Error("Backend URL invalide."); try { const response = await fetch(url, { method: 'POST', mode: 'cors', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' }); if (!response.ok) { let errorText = `Erreur réseau: ${response.statusText} (${response.status})`; try { const errJson = await response.json(); if (errJson?.error) errorText = `Erreur backend: ${errJson.error}`; } catch(e) {} throw new Error(errorText); } return response.json(); } catch (err) { console.error("Erreur fetchGAS:", err); throw new Error("Communication serveur échouée."); } }
-      function blobToBase64(blob) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => { try { const base64 = reader.result.split(',')[1]; if (!base64) throw new Error("Conv Base64 invalide."); resolve(base64); } catch (err) { reject(err); } }; reader.onerror = reject; reader.readAsDataURL(blob); }); }
+        if (!profileQuestions || typeof profileQuestions !== 'object') {
+            console.warn(`Profil '${effectiveProfile}' non trouvé, fallback sur 'autre'.`);
+            effectiveProfile = 'autre';
+            profileQuestions = CONFIG.QUESTIONS['autre'];
+        }
+        
+        if (!profileQuestions || typeof profileQuestions !== 'object') {
+          console.error("Config questions invalide: 'autre' manque ou n'est pas un objet.");
+          topics = [];
+          if (cardsGrid) cardsGrid.innerHTML = '<p class="text-red-600 text-center col-span-full">Erreur: Configuration des questions invalide.</p>';
+          updateProgress(); 
+          return;
+        }
 
-      // --- submitOne --- (Utilise l'UX "envoyer et considérer OK si HTTP 200")
+        topics = Object.keys(profileQuestions);
+        console.log(`Utilisation profil '${effectiveProfile}', Topics:`, topics);
+
+        if (topics.length === 0) {
+           console.error("Aucune question définie.");
+           if (cardsGrid) cardsGrid.innerHTML = '<p class="text-center col-span-full">Aucune question configurée.</p>';
+        } else {
+           if (cardsGrid) cardsGrid.innerHTML = ''; 
+           
+           topics.forEach(topic => {
+             const entry = currentStatus[topic];
+             const done = !!entry?.done;
+             const questionText = getQuestion(effectiveProfile, topic);
+             
+             const card = document.createElement('button');
+             card.type = 'button';
+             card.dataset.topic = topic;
+             // Utilisation de la classe 'glass-bubble' définie dans le CSS du 'new'
+             card.className = `glass-bubble w-full text-left p-5 space-y-3 transition duration-200 hover:shadow-lg hover:-translate-y-1 ${done ? 'opacity-70 hover:opacity-100' : ''}`;
+             
+             card.innerHTML = `
+               <div class="flex items-center justify-between">
+                 <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                   <img src="${CONFIG.BRAND.MARK_URL}" alt="" class="h-5 w-5">
+                   ${topic.charAt(0).toUpperCase() + topic.slice(1)} 
+                 </span>
+                 ${done
+                   ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Répondu</span>`
+                   : `<span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">À faire</span>`
+                 }
+               </div>
+               <p class="text-sm text-gray-800">${questionText}</p>
+               ${done && entry.at ? `<p class="text-xs text-gray-500 pt-2">Répondu le ${new Date(entry.at).toLocaleDateString()}</p>` : ''}
+             `;
+             
+             card.addEventListener('click', () => openModal(topic, card));
+             if (cardsGrid) cardsGrid.appendChild(card);
+           });
+        }
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const validTopics = Array.isArray(topics) ? topics : []; 
+        const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
+        const total = validTopics.length; 
+        const pct = (total > 0) ? Math.round((done / total) * 100) : 0;
+        
+        if (progressText) progressText.textContent = `${done}/${total} complétées`;
+        animateCounter(progressPct, currentAnimatedPct, pct, '%');
+        currentAnimatedPct = pct;
+        if (progressBar) progressBar.style.width = `${pct}%`;
+      }
+      
+      function animateCounter(el, from, to, suffix = '') {
+         if (!el) return;
+        if (from === to) { el.textContent = `${to}${suffix}`; return; }
+        const duration = 400; const frameRate = 1000 / 60;
+        const totalFrames = Math.round(duration / frameRate);
+        const diff = to - from;
+        let frame = 0;
+        let animationFrameId;
+        function step() {
+          frame++;
+          const progress = 1 - Math.pow(1 - (frame / totalFrames), 2);
+          const currentVal = from + (diff * progress);
+          el.textContent = `${Math.round(currentVal)}${suffix}`;
+          if (frame < totalFrames) {
+             animationFrameId = requestAnimationFrame(step);
+          } else {
+             el.textContent = `${to}${suffix}`;
+          }
+        }
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(step);
+      }
+      
+      // ------------------------------------
+      // Logique de la Modale d'Enregistrement (repris de l'ancien)
+      // ------------------------------------
+      
+      const btnRecord = $('#btnRecord');
+      const btnPause = $('#btnPause');
+      const btnResume = $('#btnResume');
+      const btnStop = $('#btnStop');
+      const btnReRecord = $('#btnReRecord');
+      const btnSend = $('#btnSend');
+      
+      const meterBar = $('#meter');
+      const timerEl = $('#timer');
+      const timerWrap = $('#timerWrap'); // Référence au conteneur du timer
+      const player = $('#player');
+      const previewWrap = $('#previewWrap');
+      const fileInfo = $('#fileInfo');
+
+      let mediaStream, mediaRecorder, audioChunks = [], audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
+      let startedAt = 0, pausedAt = 0, totalPausedTime = 0;
+      let timerInterval = null;
+      let audioContext, analyser, dataArray;
+      
+      function openModal(topic, trigger) {
+        if (sending) { toast('Envoi en cours...', 'warn'); return; }
+        if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort) {
+           toast('Veuillez valider votre profil.', 'warn');
+           profileModal.classList.remove('hidden'); 
+           return;
+        }
+        
+        currentTopic = topic;
+        lastTrigger = trigger || null;
+        
+        $('#modalTheme').textContent = topic.charAt(0).toUpperCase() + topic.slice(1);
+        $('#modalTitle').textContent = getQuestion(currentMeta.profile, topic);
+        
+        resetRecording(true); 
+        
+        recordModal.classList.remove('hidden');
+        btnRecord.focus(); 
+      }
+
+      function closeModal() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        mediaStream?.getTracks().forEach(track => track.stop());
+        recordModal.classList.add('hidden'); 
+        if (lastTrigger) lastTrigger.focus();
+      }
+      
+      // Listeners modale (repris de l'ancien)
+      if (modalClose) modalClose.addEventListener('click', closeModal);
+      if (recordModal) recordModal.addEventListener('click', (e) => {
+        if (e.target === recordModal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && recordModal && !recordModal.classList.contains('hidden')) {
+              closeModal();
+          }
+      });
+      
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+      
+      function updateSendState() {
+        const canSend = currentMeta.consent && !!audioBlob && !sending;
+        if (btnSend) {
+            btnSend.disabled = !canSend;
+            btnSend.classList.toggle('btn-disabled', !canSend);
+        }
+      }
+
+      /** Réinitialise l'interface d'enregistrement (repris de l'ancien) */
+      function resetRecording(inModal = false) {
+        mediaStream?.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          try { mediaRecorder.stop(); } catch(e) { console.warn("Arrêt redondant recorder"); }
+        }
+        mediaRecorder = null;
+        audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext"));
+        audioContext = null;
+        
+        clearInterval(timerInterval); timerInterval = null;
+        
+        audioChunks = []; audioBlob = null;
+        if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
+        
+        startedAt = 0; pausedAt = 0; totalPausedTime = 0;
+        
+        if (inModal) {
+          if(previewWrap) previewWrap.classList.add('hidden');
+          if ($('#controlsWrap')) $('#controlsWrap').classList.remove('hidden');
+          
+          if(timerEl) timerEl.textContent = '00:00';
+          if(timerWrap) timerWrap.textContent = `00:00 / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+          if(meterBar) meterBar.style.width = '0%';
+          
+          if(btnRecord) btnRecord.classList.remove('hidden');
+          if(btnPause) btnPause.classList.add('hidden');
+          if(btnResume) btnResume.classList.add('hidden');
+          if(btnStop) btnStop.classList.add('hidden');
+          if(btnStop) btnStop.disabled = true;
+          if(btnRecord) btnRecord.disabled = false;
+          
+          setStatus('Prêt');
+          updateSendState();
+        }
+      }
+
+      // --- Logique d'enregistrement (repris de l'ancien) ---
+      
+      if(btnRecord) btnRecord.addEventListener('click', startRecording);
+      if(btnPause) btnPause.addEventListener('click', pauseRecording);
+      if(btnResume) btnResume.addEventListener('click', resumeRecording);
+      if(btnStop) btnStop.addEventListener('click', stopRecording);
+      if(btnReRecord) btnReRecord.addEventListener('click', () => resetRecording(true));
+
+      async function startRecording() {
+        resetRecording(true);
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { noiseSuppression: true, echoCancellation: true } 
+          });
+        } catch (err) {
+          console.error("Erreur getUserMedia:", err);
+          let errorMsg = 'Erreur: Micro refusé/non trouvé.';
+          if (err.name === 'NotAllowedError') errorMsg = 'Autorisation micro requise.';
+          else if (err.name === 'NotFoundError') errorMsg = 'Aucun micro trouvé.';
+          toast(errorMsg, 'err'); setStatus('Erreur micro'); return;
+        }
+
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // Reprise du contexte si suspendu (ex: changement d'onglet)
+          document.addEventListener("visibilitychange", () => {
+            if (!audioContext || audioContext.state === 'closed') return;
+            if (document.visibilityState === 'visible') {
+              audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext", e));
+            }
+          });
+          if (audioContext.state === 'suspended') {
+             audioContext.resume().catch(e => console.warn("Erreur reprise AudioContext (initial)", e));
+          }
+
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256; dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const source = audioContext.createMediaStreamSource(mediaStream);
+          source.connect(analyser);
+
+          const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+          mimeType = preferred.find(t => MediaRecorder.isTypeSupported?.(t)) || 'audio/webm';
+          
+          mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+
+          mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) audioChunks.push(e.data); };
+
+          mediaRecorder.onstart = () => {
+            startedAt = Date.now(); totalPausedTime = 0;
+            setStatus('Enregistrement en cours…'); toast('Enregistrement démarré...');
+            
+            btnRecord.classList.add('hidden');
+            btnPause.classList.remove('hidden');
+            btnResume.classList.add('hidden');
+            btnStop.classList.remove('hidden');
+            btnStop.disabled = false;
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+              const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
+              const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
+              
+              if(timerEl) timerEl.textContent = hhmmss(sec);
+              if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+              
+              if (sec >= CONFIG.LIMITS.MAX_SECONDS) {
+                stopRecording(); toast(`Temps max (${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}) atteint.`, 'warn');
+              }
+              
+              if (analyser && dataArray && meterBar) {
+                analyser.getByteTimeDomainData(dataArray); let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) { const v = (dataArray[i] - 128) / 128; sum += v * v; }
+                const rms = Math.sqrt(sum / dataArray.length);
+                meterBar.style.width = Math.min(100, Math.floor(rms * 200)) + "%"; 
+              }
+            }, 80);
+          };
+          
+          mediaRecorder.onstop = () => {
+            clearInterval(timerInterval); timerInterval = null;
+            if (meterBar) meterBar.style.width = '0%';
+            
+            audioBlob = new Blob(audioChunks, { type: mimeType });
+            
+            if (audioBlob.size > CONFIG.LIMITS.MAX_BYTES) {
+              toast(`Fichier trop volumineux (> ${Math.round(CONFIG.LIMITS.MAX_BYTES / 1024 / 1024)} Mo).`, 'err');
+              resetRecording(true); return;
+            }
+            if (audioBlob.size < 1000) {
+               toast('Enregistrement trop court.', 'warn');
+               resetRecording(true); return;
+            }
+
+            audioUrl = URL.createObjectURL(audioBlob);
+            if(player) player.src = audioUrl;
+            if(previewWrap) previewWrap.classList.remove('hidden');
+            if ($('#controlsWrap')) $('#controlsWrap').classList.add('hidden');
+            
+            const durationText = (timerEl ? timerEl.textContent : hhmmss(0));
+            if(fileInfo) fileInfo.textContent = `${mimeType}, ${(audioBlob.size / 1024).toFixed(1)} KB, durée: ${durationText}`;
+            
+            setStatus('Prêt à l’envoi');
+            updateSendState();
+            
+            mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
+            audioContext?.close().catch(e => console.warn("Erreur fermeture AudioContext tardive")); audioContext = null;
+          };
+
+          mediaRecorder.onerror = (event) => {
+              console.error(`Erreur MediaRecorder: ${event.error.name}`, event.error);
+              toast(`Erreur enregistrement: ${event.error.message}`, 'err');
+              setStatus('Erreur enregistrement'); resetRecording(true);
+          };
+          
+          mediaRecorder.start();
+
+        } catch (err) {
+            console.error("Erreur init enregistrement:", err);
+            toast("Impossible de démarrer l'enregistrement.", 'err');
+            setStatus('Erreur init'); resetRecording(true);
+        }
+      }
+      
+      function pauseRecording() {
+        if (mediaRecorder?.state === 'recording') {
+          mediaRecorder.pause(); pausedAt = Date.now();
+          clearInterval(timerInterval); timerInterval = null;
+          setStatus('En pause');
+          if(btnPause) btnPause.classList.add('hidden'); if(btnResume) btnResume.classList.remove('hidden');
+        }
+      }
+      
+      function resumeRecording() {
+        if (mediaRecorder?.state === 'paused') {
+          mediaRecorder.resume();
+          totalPausedTime += (Date.now() - pausedAt); pausedAt = 0;
+          setStatus('Enregistrement en cours…');
+          if(btnPause) btnPause.classList.remove('hidden'); if(btnResume) btnResume.classList.add('hidden');
+          
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            const elapsedSeconds = (Date.now() - startedAt - totalPausedTime) / 1000;
+            const sec = Math.min(CONFIG.LIMITS.MAX_SECONDS, elapsedSeconds);
+            if(timerEl) timerEl.textContent = hhmmss(sec);
+            if(timerWrap) timerWrap.textContent = `${hhmmss(sec)} / ${hhmmss(CONFIG.LIMITS.MAX_SECONDS)}`;
+            
+            if (sec >= CONFIG.LIMITS.MAX_SECONDS) stopRecording();
+            
+            if (analyser && dataArray && meterBar) {
+              analyser.getByteTimeDomainData(dataArray); let sum = 0;
+              for(let i=0;i<dataArray.length;i++){ const v=(dataArray[i]-128)/128; sum+=v*v; }
+              const rms=Math.sqrt(sum/dataArray.length);
+              meterBar.style.width=Math.min(100,Math.floor(rms*200))+"%";
+            }
+          }, 80);
+        }
+      }
+      
+      function stopRecording() {
+        if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
+          mediaRecorder.stop(); toast('Enregistrement arrêté.');
+          
+          if(btnRecord) btnRecord.classList.remove('hidden'); // S'affiche via resetRecording
+          if(btnPause) btnPause.classList.add('hidden');
+          if(btnResume) btnResume.classList.add('hidden');
+          if(btnStop) btnStop.classList.add('hidden');
+          if(btnStop) btnStop.disabled = true;
+          if(btnRecord) btnRecord.disabled = false;
+        }
+      }
+
+      // ------------------------------------
+      // Logique d'Envoi et API (Version 'new', complète)
+      // ------------------------------------
+
+      async function fetchGAS(url, payload) {
+        // Validation de l'URL
+        if (!url || !url.startsWith("https://script.google.com")) {
+            throw new Error("Backend URL invalide ou non configurée.");
+        }
+        try {
+          const response = await fetch(url, {
+            method: 'POST', mode: 'cors', credentials: 'omit',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // GAS recommande text/plain pour doPost
+            body: JSON.stringify(payload), redirect: 'follow'
+          });
+          
+          if (!response.ok) {
+            let errorText = `Erreur réseau: ${response.statusText} (${response.status})`;
+            try {
+              // Tenter de lire la réponse d'erreur JSON
+              const errJson = await response.json();
+              if (errJson?.error) errorText = `Erreur backend: ${errJson.error}`;
+            } catch(e) {
+              // Ignorer si ce n'est pas du JSON
+            }
+            throw new Error(errorText);
+          }
+          // Si OK, on attend la réponse JSON
+          return response.json(); 
+        } catch (err) {
+          console.error("Erreur fetchGAS:", err);
+          throw new Error("Communication serveur échouée.");
+        }
+      }
+
+      function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            try {
+              const base64 = reader.result.split(',')[1];
+              if (!base64) throw new Error("Conversion Base64 invalide.");
+              resolve(base64);
+            } catch (err) {
+              reject(err);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+
       if(btnSend) btnSend.addEventListener('click', submitOne);
+
+      /** Envoie la réponse finale (Version 'new', complète). */
       async function submitOne() {
          if (sending || !audioBlob) return;
+         
          sending = true;
          setStatus('Préparation envoi...');
-         if (modalClose) modalClose.disabled = true; if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
-         updateSendState(); toast('Envoi de votre réponse...');
+         if (modalClose) modalClose.disabled = true;
+         if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
+         updateSendState();
+         toast('Envoi de votre réponse...');
+         
          try {
-           const fileBase64 = await blobToBase64(audioBlob); const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0]; const durationSec = (mm * 60 + ss) || 0;
-           const payload = { action: "uploadAudio", ...currentMeta, topic: currentTopic, durationSec: durationSec, mimeType: mimeType, transcription: "[CLIENT_TRANSCRIPTION_DISABLED]", fileBase64: fileBase64, clientUA: navigator.userAgent };
-           console.log("----------------------------------------"); console.log("Frontend: Envoi du payload à", CONFIG.WEBAPP_URL); console.log("MimeType envoyé:", payload.mimeType);
+           const fileBase64 = await blobToBase64(audioBlob);
+           const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
+           const durationSec = (mm * 60 + ss) || 0;
+
+           const payload = {
+             action: "uploadAudio",
+             ...currentMeta,
+             topic: currentTopic,
+             durationSec: durationSec,
+             mimeType: mimeType, // La variable globale mimeType
+             transcription: "[CLIENT_TRANSCRIPTION_DISABLED]", // Placeholder
+             fileBase64: fileBase64,
+             clientUA: navigator.userAgent
+           };
+
+           console.log("----------------------------------------");
+           console.log("Frontend: Envoi du payload 'uploadAudio' à", CONFIG.WEBAPP_URL);
+           console.log("MimeType envoyé:", payload.mimeType);
+           
            setStatus('Envoi en cours...');
-           const response = await fetch(CONFIG.WEBAPP_URL, { method: 'POST', mode: 'cors', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' });
-           if (!response.ok) { let errorText = `Erreur réseau ${response.status}: ${response.statusText}`; try { const bodyText = await response.text(); console.error("Réponse d'erreur brute du backend:", bodyText); const errJson = JSON.parse(bodyText); if (errJson && errJson.error) { errorText = errJson.error; } else if (bodyText) { errorText = bodyText.slice(0, 100); } } catch(e) { console.warn("Impossible lire/parser erreur"); } throw new Error(errorText); }
-           console.log("Frontend: Communication backend OK (HTTP 200).");
-           setStatus('Terminé ✅'); toast('Réponse envoyée !', 'ok');
-           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec }; saveStatus(currentMeta.studentCode, currentStatus);
+           
+           // APPEL HTTP
+           const response = await fetch(CONFIG.WEBAPP_URL, {
+             method: 'POST', mode: 'cors', credentials: 'omit',
+             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+             body: JSON.stringify(payload), redirect: 'follow'
+           });
+
+           // GESTION RÉPONSE HTTP 
+           if (!response.ok) {
+             let errorText = `Erreur réseau ${response.status}: ${response.statusText}`;
+             try {
+               const bodyText = await response.text();
+               console.error("Réponse d'erreur brute du backend:", bodyText);
+               const errJson = JSON.parse(bodyText);
+               if (errJson && errJson.error) {
+                 errorText = errJson.error;
+               } else if (bodyText) {
+                 errorText = bodyText.slice(0, 100);
+               }
+             } catch(e) {
+               console.warn("Impossible lire/parser erreur");
+             }
+             throw new Error(errorText); // Lance l'erreur vers le catch
+           }
+           
+           // Si HTTP 200 OK (même si le JSON interne dit {ok: false})
+           // On vérifie le JSON reçu
+           const jsonResult = await response.json();
+           if (jsonResult.ok === false) {
+                // Erreur logique renvoyée par le script (ex: "Audio manquant")
+                throw new Error(jsonResult.error || "Erreur inconnue du backend.");
+           }
+
+           // --- SUCCÈS TOTAL ---
+           console.log("Frontend: Communication backend OK (HTTP 200 et json.ok=true).");
+           setStatus('Terminé ✅');
+           toast('Réponse envoyée !', 'ok');
+           
+           // Mise à jour locale
+           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
+           saveStatus(currentMeta.studentCode, currentStatus);
            renderAllCards();
-           // closeModal(); // Déplacé dans finally
+           
          } catch (err) {
-           console.error('Erreur finale submitOne:', err); toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err'); setStatus('Erreur d’envoi');
+           // Attrape les erreurs (blob, fetch, !response.ok, json.ok=false)
+           console.error('Erreur finale submitOne:', err);
+           toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
+           setStatus('Erreur d’envoi');
+           
          } finally {
-           sending = false; if (modalClose) modalClose.disabled = false; if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
-           updateSendState(); console.log("------------------- submitOne terminé --------------------");
+           // S'exécute TOUJOURS (succès ou erreur)
+           sending = false;
+           if (modalClose) modalClose.disabled = false;
+           if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
+           updateSendState();
+           console.log("------------------- submitOne terminé --------------------");
            closeModal(); // Ferme TOUJOURS la modale
          }
       } // Fin submitOne
-
+      
       // --- Démarrage ---
-      initProfile();
+      initProfile(); // Lancer l'initialisation
       console.log("Initialisation terminée.");
-
-    }); // Fin DOMContentLoaded
+      
+    }); // Fin de DOMContentLoaded
   </script>
 </body>
 </html>
