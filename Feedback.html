@@ -44,7 +44,7 @@
   <meta name="description" content="Mini-Voiceform CHOPS — collecte sécurisée de retours vocaux.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Styles améliorés avec Inter et border-radius */
+    /* ... (Styles inchangés) ... */
     :root { --bg-start: #f3f4f6; --bg-end: #e0e7ff; --bg-mid: #dbeafe; --card-bg: rgba(255, 255, 255, 0.45); --card-border: rgba(255, 255, 255, 0.7); --card-shadow: rgba(0, 0, 0, 0.05); --text-primary: #111827; --text-secondary: #4b5563; --accent-primary: #4f46e5; --accent-primary-hover: #4338ca; --accent-success: #16a34a; --accent-record: #dc2626; --accent-pause: #f59e0b; }
     body { background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end), var(--bg-mid)); background-size: 400% 400%; animation: gradientBG 25s ease infinite; color: var(--text-primary); padding-bottom: 80px; font-family: Inter, sans-serif; }
     @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -53,10 +53,9 @@
     .form-input:focus { background-color: rgba(255, 255, 255, 0.9); border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary); outline: none; }
     .btn-disabled { opacity: 0.5; cursor: not-allowed; }
     #floatingProgress { background-color: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--card-border); transition: opacity 0.3s, transform 0.3s; z-index: 60; border-top-left-radius: 1rem; border-top-right-radius: 1rem;}
-    .progress-bar-inner { background: linear-gradient(90deg, var(--accent-primary), var(--accent-success)); background-size: 200% 100%; animation: progress-active 2s ease-in-out infinite; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); border-radius: 9999px;} /* Ajout radius barre */
+    .progress-bar-inner { background: linear-gradient(90deg, var(--accent-primary), var(--accent-success)); background-size: 200% 100%; animation: progress-active 2s ease-in-out infinite; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); border-radius: 9999px;}
     @keyframes progress-active { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
     .hidden { display: none; }
-    /* MODIFIÉ: Ajout de #completionModal */
     #profileModal, #completionModal { align-items: flex-start; padding-top: 1rem; padding-bottom: 1rem; }
     @media (min-width: 640px) { #profileModal, #completionModal { align-items: center; } }
     #profileModal .glass-bubble, #completionModal .glass-bubble { overflow-y: auto; max-height: 90vh; }
@@ -69,7 +68,6 @@
     .border-b-2 { border-bottom-width: 2px; }
     .border-indigo-600 { border-color: #4f46e5; }
     .h-5 { height: 1.25rem; } .w-5 { width: 1.25rem; }
-    /* Style boutons (classes de base) */
     .btn { padding-left: 1.25rem; padding-right: 1.25rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-weight: 600; border-radius: 9999px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; outline: 2px solid transparent; outline-offset: 2px; }
     .btn:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
     .btn-primary { background-color: var(--accent-primary); color: white; } .btn-primary:hover { background-color: var(--accent-primary-hover); } .btn-primary:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
@@ -175,7 +173,10 @@
          <label for="userEmail" class="block text-sm font-medium text-gray-800">Laissez-nous votre email pour un suivi (optionnel) :</label>
          <form id="emailForm" class="flex flex-col sm:flex-row gap-2">
             <input id="userEmail" type="email" placeholder="votre.email@exemple.com" class="form-input flex-1 px-3 py-2" inputmode="email">
-            <button id="submitEmailBtn" type="submit" class="btn btn-secondary whitespace-nowrap">Envoyer</button>
+            <button id="submitEmailBtn" type="submit" class="btn btn-secondary whitespace-nowrap flex items-center justify-center gap-2">
+              <svg id="emailSpinner" class="h-5 w-5 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+              <span id="submitEmailText">Envoyer</span>
+            </button>
          </form>
          <p id="emailStatus" class="text-xs text-gray-600 mt-1"></p>
       </div>
@@ -242,7 +243,7 @@
       const w = $('#toasts');
       if (!w) return;
       
-      // Gérer la limite
+      // NOUVEAU: Gérer la limite
       while (w.children.length >= MAX_TOASTS) {
         const oldToast = w.firstElementChild;
         if (oldToast) {
@@ -337,21 +338,32 @@
       const submitEmailBtn = $('#submitEmailBtn');
       const userEmail = $('#userEmail');
       const emailStatus = $('#emailStatus');
+      const emailSpinner = $('#emailSpinner');
+      const submitEmailText = $('#submitEmailText');
       
       
-      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner || !completionModal) {
-          console.error("Éléments UI principaux manquants !");
+      // CORRECTION: La vérification inclut maintenant TOUS les sélecteurs définis ci-dessus.
+      if (!profileModal || !metaForm || !saveProfileBtn || !editProfileBtn || !mainContent || !cardsGrid || 
+          !recordModal || !modalClose || !statusEl || !floatingProgress || !progressText || !progressPct || 
+          !progressBar || !profileSpinner || !completionModal || !modalCompleteClose || !emailForm || 
+          !submitEmailBtn || !userEmail || !emailStatus || !emailSpinner || !submitEmailText) {
+          
+          console.error("Éléments UI principaux manquants ! Vérifiez les IDs dans le HTML.");
           toast("Erreur critique: Interface incomplète.", "err");
           return;
       }
 
       // --- État de l'application ---
       let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
+      // currentStatus peut contenir:
+      // { topic1: { done: true, at: '...', durationSec: 30 } }
+      // { topic2: { sending: true } }
+      // { topic3: { failed: true } }
       let currentStatus = {};
       let topics = [];
       let currentTopic = null;
       let lastTrigger = null;
-      let sendingDebounce = false; 
+      let sendingDebounce = false; // Anti-double-clic sur "Envoyer"
       let currentAnimatedPct = 0;
       let isSubmittingProfile = false;
 
@@ -381,6 +393,7 @@
       function initProfile() {
         console.log("Initialisation du profil...");
         const meta = loadMeta();
+        // Vérifie si l'ID de dossier est présent (important depuis la v2)
         if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true && meta.userFolderDriveId) {
           console.log("Profil valide (avec ID dossier) trouvé:", meta);
           currentMeta = meta;
@@ -433,9 +446,11 @@
            isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
         }
         
+        // 1. Sauvegarde locale (provisoire, sans ID dossier)
         currentMeta = { studentCode, cohort, profile, used, consent: true };
         
         try {
+          // 2. Appel au backend pour créer/récupérer dossier
           console.log('Appel ensureUserFolder...');
           const folderPayload = { action: "ensureUserFolder", studentCode, cohort, profile, used };
           const folderJson = await fetchGAS(CONFIG.WEBAPP_URL, folderPayload);
@@ -447,9 +462,10 @@
             throw new Error("Réponse backend invalide (ID dossier manquant).");
           }
           
+          // 3. Succès : Sauvegarde finale avec l'ID dossier
           currentMeta.userFolderDriveId = folderJson.userFolderDriveId;
-          saveMeta(currentMeta); 
-          currentStatus = loadStatus(currentMeta.studentCode); 
+          saveMeta(currentMeta); // Sauvegarde complète
+          currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
           console.log(`Dossier Drive OK. ID sauvegardé: ${currentMeta.userFolderDriveId}`);
           
           profileModal.classList.add('hidden');
@@ -461,6 +477,7 @@
         } catch (folderErr) {
           console.error('Erreur ensureUserFolder:', folderErr);
           toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
+          // Ne cache pas la modale, l'utilisateur doit pouvoir réessayer
         } finally {
           isSubmittingProfile = false;
           saveProfileBtn.disabled = false;
@@ -472,11 +489,12 @@
       // --- Bouton editProfile ---
       if (editProfileBtn) {
           editProfileBtn.addEventListener('click', () => {
+            // Force la re-saisie pour recréer/vérifier l'ID dossier au cas où
             profileModal.classList.remove('hidden');
           });
       }
       
-      // --- NOUVEAU: Listeners pour la modale de complétion ---
+      // --- Listeners pour la modale de complétion ---
       if(modalCompleteClose) {
           modalCompleteClose.addEventListener('click', () => {
               completionModal.classList.add('hidden');
@@ -486,27 +504,62 @@
               if (userEmail) userEmail.disabled = false;
               if (submitEmailBtn) submitEmailBtn.disabled = false;
               if (submitEmailBtn) submitEmailBtn.classList.remove('btn-disabled');
+              if (emailSpinner) emailSpinner.classList.add('hidden');
+              if (submitEmailText) submitEmailText.textContent = "Envoyer";
           });
       }
       
       if(emailForm) {
-          emailForm.addEventListener('submit', (e) => {
+          emailForm.addEventListener('submit', async (e) => {
               e.preventDefault();
-              const email = userEmail.value;
-              if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                  // On ne l'envoie NULLE PART, on simule juste le succès
+              const email = userEmail.value.trim();
+              
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                  emailStatus.textContent = "Veuillez entrer un email valide.";
+                  emailStatus.className = "text-xs text-red-600 mt-1";
+                  return;
+              }
+
+              // Début de l'envoi
+              submitEmailBtn.disabled = true;
+              submitEmailBtn.classList.add('btn-disabled');
+              emailSpinner.classList.remove('hidden');
+              submitEmailText.textContent = "Envoi...";
+              emailStatus.textContent = "";
+
+              try {
+                  const payload = {
+                      action: "saveEmail",
+                      email: email,
+                      studentCode: currentMeta.studentCode || 'inconnu'
+                  };
+                  
+                  const response = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+                  
+                  if (response.ok === false) {
+                      throw new Error(response.error || "Erreur inconnue");
+                  }
+                  
+                  // Succès
                   emailStatus.textContent = "Merci ! Votre email est enregistré.";
                   emailStatus.className = "text-xs text-green-700 mt-1";
                   userEmail.disabled = true;
-                  submitEmailBtn.disabled = true;
-                  submitEmailBtn.classList.add('btn-disabled');
-                  
-                  // NOTE: Ici, on pourrait appeler une autre fonction fetchGAS
-                  // avec action: "saveEmail" si le backend était prêt.
-                  
-              } else {
-                  emailStatus.textContent = "Veuillez entrer un email valide.";
+
+              } catch (err) {
+                  // Erreur
+                  console.error("Erreur sauvegarde email:", err);
+                  emailStatus.textContent = `Erreur : ${err.message}`;
                   emailStatus.className = "text-xs text-red-600 mt-1";
+                  submitEmailBtn.disabled = false;
+                  submitEmailBtn.classList.remove('btn-disabled');
+              } finally {
+                  // Fin de l'envoi
+                  emailSpinner.classList.add('hidden');
+                  if (!userEmail.disabled) { // Si pas de succès
+                     submitEmailText.textContent = "Envoyer";
+                  } else {
+                     submitEmailText.textContent = "Envoyé";
+                  }
               }
           });
       }
@@ -647,13 +700,13 @@
       // Logique de la Modale d'Enregistrement
       // ------------------------------------
       
+      // ... (Sélecteurs locaux à la modale) ...
       const btnRecord = $('#btnRecord');
       const btnPause = $('#btnPause');
       const btnResume = $('#btnResume');
       const btnStop = $('#btnStop');
       const btnReRecord = $('#btnReRecord');
       const btnSend = $('#btnSend');
-      
       const meterBar = $('#meter');
       const timerEl = $('#timer');
       const timerWrap = $('#timerWrap');
@@ -661,6 +714,7 @@
       const previewWrap = $('#previewWrap');
       const fileInfo = $('#fileInfo');
 
+      // ... (Variables d'état de l'enregistrement) ...
       let mediaStream, mediaRecorder, audioChunks = [], audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
       let startedAt = 0, pausedAt = 0, totalPausedTime = 0;
       let timerInterval = null;
@@ -705,6 +759,7 @@
         currentTopic = null; 
       }
       
+      // ... (Listeners modale enregistrement inchangés) ...
       if (modalClose) modalClose.addEventListener('click', closeModal);
       if (recordModal) recordModal.addEventListener('click', (e) => {
         if (e.target === recordModal) closeModal();
@@ -726,43 +781,33 @@
       }
 
       function resetRecording(inModal = false) {
-        mediaStream?.getTracks().forEach(t => t.stop());
-        mediaStream = null;
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          try { mediaRecorder.stop(); } catch(e) {}
-        }
+        // ... (Fonction resetRecording inchangée) ...
+        mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e) {} }
         mediaRecorder = null;
-        // audioContext n'est pas recréé ici, on garde le global
-        
         clearInterval(timerInterval); timerInterval = null;
-        
         audioChunks = []; audioBlob = null;
         if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
-        
         startedAt = 0; pausedAt = 0; totalPausedTime = 0;
-        
         if (inModal) {
           if(previewWrap) previewWrap.classList.add('hidden');
           if ($('#controlsWrap')) $('#controlsWrap').classList.remove('hidden');
-          
           const maxTime = hhmmss(CONFIG.LIMITS.MAX_SECONDS);
           if(timerEl) timerEl.textContent = '00:00';
           if(timerWrap) timerWrap.textContent = `00:00 / ${maxTime}`;
           if(meterBar) meterBar.style.width = '0%';
-          
           if(btnRecord) btnRecord.classList.remove('hidden');
           if(btnPause) btnPause.classList.add('hidden');
           if(btnResume) btnResume.classList.add('hidden');
           if(btnStop) btnStop.classList.add('hidden');
           if(btnStop) btnStop.disabled = true;
           if(btnRecord) btnRecord.disabled = false;
-          
           setStatus('Prêt');
           updateSendState();
         }
       }
 
-      // --- Logique d'enregistrement ---
+      // --- Logique d'enregistrement (Inchangée) ---
       
       if(btnRecord) btnRecord.addEventListener('click', startRecording);
       if(btnPause) btnPause.addEventListener('click', pauseRecording);
@@ -938,9 +983,8 @@
       }
 
       // ------------------------------------
-      // Logique d'Envoi et API (MODIFIÉE)
+      // Logique d'Envoi et API (Inchangée)
       // ------------------------------------
-
       async function fetchGAS(url, payload) {
         if (!url || !url.startsWith("https://script.google.com")) {
             throw new Error("Backend URL invalide ou non configurée.");
@@ -1028,7 +1072,7 @@
            }
          } finally {
            sendingDebounce = false;
-           updateSendState();
+           updateSendState(); 
          }
       } 
 
@@ -1051,15 +1095,13 @@
               renderAllCards(); 
               toast(`Réponse pour ${topicLabel} envoyée !`, 'ok'); 
 
-              // MODIFIÉ: Vérifier la complétion totale
+              // Vérifier la complétion totale
               const validTopics = Array.isArray(topics) ? topics : [];
               const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
               const total = validTopics.length;
 
               if (total > 0 && done === total) {
-                // On attend 1s pour la fluidité
                 setTimeout(() => {
-                  // Appelle la modale au lieu du toast
                   showCompletionModal();
                 }, 1000); 
               }
