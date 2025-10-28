@@ -362,7 +362,7 @@
            isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
         }
         
-        // Sauvegarde locale
+         // Sauvegarde locale
         currentMeta = { studentCode, cohort, profile, used, consent: true };
         saveMeta(currentMeta);
         currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
@@ -381,7 +381,16 @@
             throw new Error(folderJson.error || 'Erreur création dossier.');
           }
           
-          console.log('Dossier Drive OK.');
+          // NOUVEAU: Sauvegarder l'ID du dossier reçu du backend
+          if (!folderJson.userFolderDriveId) {
+            console.error("Erreur: Le backend n'a pas renvoyé userFolderDriveId");
+            throw new Error("Réponse backend invalide (ID dossier manquant).");
+          }
+          
+          currentMeta.userFolderDriveId = folderJson.userFolderDriveId; // Sauvegarder dans l'état
+          saveMeta(currentMeta); // Sauvegarder DÉFINITIVEMENT dans localStorage
+
+          console.log(`Dossier Drive OK. ID sauvegardé: ${currentMeta.userFolderDriveId}`);
           
           // Succès
           profileModal.classList.add('hidden');
@@ -896,6 +905,8 @@
            console.log("----------------------------------------");
            console.log("Frontend: Envoi du payload 'uploadAudio' à", CONFIG.WEBAPP_URL);
            console.log("MimeType envoyé:", payload.mimeType);
+           // AJOUT: Log pour vérifier que l'ID est bien envoyé
+           console.log("userFolderDriveId envoyé:", payload.userFolderDriveId);
            
            setStatus('Envoi en cours...');
            
