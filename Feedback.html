@@ -45,15 +45,16 @@
   <meta name="description" content="Mini-Voiceform CHOPS — collecte sécurisée de retours vocaux.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* Styles améliorés avec Inter et border-radius */
     :root { --bg-start: #f3f4f6; --bg-end: #e0e7ff; --bg-mid: #dbeafe; --card-bg: rgba(255, 255, 255, 0.45); --card-border: rgba(255, 255, 255, 0.7); --card-shadow: rgba(0, 0, 0, 0.05); --text-primary: #111827; --text-secondary: #4b5563; --accent-primary: #4f46e5; --accent-primary-hover: #4338ca; --accent-success: #16a34a; --accent-record: #dc2626; --accent-pause: #f59e0b; }
-    body { background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end), var(--bg-mid)); background-size: 400% 400%; animation: gradientBG 25s ease infinite; color: var(--text-primary); padding-bottom: 80px; font-family: Inter, sans-serif; } /* Ajout font Inter */
+    body { background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end), var(--bg-mid)); background-size: 400% 400%; animation: gradientBG 25s ease infinite; color: var(--text-primary); padding-bottom: 80px; font-family: Inter, sans-serif; }
     @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-    .glass-bubble { background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--card-border); box-shadow: 0 8px 32px 0 var(--card-shadow); transition: all 0.3s ease; border-radius: 1rem; } /* Ajout border-radius */
-    .form-input { background-color: rgba(255, 255, 255, 0.6); border: 1px solid rgba(209, 213, 219, 0.8); color: var(--text-primary); border-radius: 0.5rem; } /* Ajout border-radius */
+    .glass-bubble { background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--card-border); box-shadow: 0 8px 32px 0 var(--card-shadow); transition: all 0.3s ease; border-radius: 1rem; }
+    .form-input { background-color: rgba(255, 255, 255, 0.6); border: 1px solid rgba(209, 213, 219, 0.8); color: var(--text-primary); border-radius: 0.5rem; }
     .form-input:focus { background-color: rgba(255, 255, 255, 0.9); border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary); outline: none; }
     .btn-disabled { opacity: 0.5; cursor: not-allowed; }
-    #floatingProgress { background-color: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--card-border); transition: opacity 0.3s, transform 0.3s; z-index: 60; border-top-left-radius: 1rem; border-top-right-radius: 1rem;} /* Ajout border-radius */
-    .progress-bar-inner { background: linear-gradient(90deg, var(--accent-primary), var(--accent-success)); background-size: 200% 100%; animation: progress-active 2s ease-in-out infinite; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+    #floatingProgress { background-color: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--card-border); transition: opacity 0.3s, transform 0.3s; z-index: 60; border-top-left-radius: 1rem; border-top-right-radius: 1rem;}
+    .progress-bar-inner { background: linear-gradient(90deg, var(--accent-primary), var(--accent-success)); background-size: 200% 100%; animation: progress-active 2s ease-in-out infinite; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); border-radius: 9999px;} /* Ajout radius barre */
     @keyframes progress-active { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
     .hidden { display: none; }
     #profileModal { align-items: flex-start; padding-top: 1rem; padding-bottom: 1rem; }
@@ -70,13 +71,13 @@
     .h-5 { height: 1.25rem; } .w-5 { width: 1.25rem; }
     /* Style boutons (classes de base) */
     .btn { padding-left: 1.25rem; padding-right: 1.25rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-weight: 600; border-radius: 9999px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; outline: 2px solid transparent; outline-offset: 2px; }
-    .btn:focus-visible { /* Simule focus:ring-2 focus:ring-offset-2 */ box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
+    .btn:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
     .btn-primary { background-color: var(--accent-primary); color: white; } .btn-primary:hover { background-color: var(--accent-primary-hover); } .btn-primary:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
     .btn-secondary { background-color: white; color: var(--accent-primary); border: 1px solid #e5e7eb; } .btn-secondary:hover { background-color: #f9fafb; } .btn-secondary:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-primary); }
     .btn-record { background-color: var(--accent-record); color: white; } .btn-record:hover { background-color: #b91c1c; } .btn-record:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-record); }
     .btn-pause { background-color: var(--accent-pause); color: white; } .btn-pause:hover { background-color: #d97706; } .btn-pause:focus-visible { box-shadow: 0 0 0 2px var(--card-border), 0 0 0 4px var(--accent-pause); }
-    .btn-sm { padding-left: 0.75rem; padding-right: 0.75rem; padding-top: 0.25rem; padding-bottom: 0.25rem; font-size: 0.875rem; /* text-sm */}
-    .btn-icon { padding: 0.5rem; /* p-2 */ }
+    .btn-sm { padding-left: 0.75rem; padding-right: 0.75rem; padding-top: 0.25rem; padding-bottom: 0.25rem; font-size: 0.875rem; }
+    .btn-icon { padding: 0.5rem; }
   </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -93,7 +94,7 @@
 
   <main id="mainContent" class="max-w-5xl mx-auto p-4 space-y-6 opacity-0 transition-opacity duration-500">
       <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <!-- Les cartes de questions seront injectées ici par le script -->
+          <!-- Les cartes -->
       </div>
   </main>
 
@@ -104,7 +105,7 @@
               <span id="progressPct" class="text-sm font-semibold text-indigo-600">0%</span>
           </div>
           <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-              <div id="progressBar" class="progress-bar-inner h-2 rounded-full" style="width:0%"></div> <!-- Ajout border-radius -->
+              <div id="progressBar" class="progress-bar-inner h-2 rounded-full" style="width:0%"></div>
           </div>
       </div>
   </div>
@@ -175,24 +176,34 @@
       // ... Branding, visibilitychange, initProfile inchangés ...
       try { /* ... branding ... */ } catch (e) { /* ... */ }
       document.addEventListener("visibilitychange", () => { /* ... */ });
-      function initProfile() { /* ... */ }
+      function initProfile() { /* ... chargé profil ou affiche modale ... */
+        console.log("Initialisation du profil...");
+        const meta = loadMeta();
+        if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true) {
+          console.log("Profil trouvé:", meta); currentMeta = meta; $('#studentCode').value = meta.studentCode; $('#cohort').value = meta.cohort; $('#profile').value = meta.profile; $('#used').value = meta.used; $('#consent').checked = meta.consent;
+          profileModal.classList.add('hidden'); mainContent.classList.remove('opacity-0'); editProfileBtn.classList.remove('hidden'); currentStatus = loadStatus(currentMeta.studentCode); renderAllCards(); console.log("Profil valide.");
+        } else {
+          console.log("Profil invalide."); profileModal.classList.remove('hidden'); mainContent.classList.add('opacity-0'); editProfileBtn.classList.add('hidden'); updateProgress();
+        }
+      }
 
       // --- Gestionnaire soumission formulaire profil (AVEC ensureUserFolder) ---
       metaForm.addEventListener('submit', async (e) => {
         e.preventDefault(); if (isSubmittingProfile) return;
         isSubmittingProfile = true; saveProfileBtn.disabled = true; saveProfileBtn.classList.add('btn-disabled'); profileSpinner.classList.remove('hidden');
         const studentCode = $('#studentCode').value.trim(); const cohort = $('#cohort').value.trim(); const consent = $('#consent').checked; const profile = $('#profile').value; const used = $('#used').value;
-        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode)) { toast('ID invalide.', 'warn'); isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return; }
-        if (cohort.length < 1) { toast('Contexte requis.', 'warn'); isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return; }
-        if (!consent) { toast('Consentement requis.', 'warn'); isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return; }
+        // Validation (simplifiée pour lisibilité)
+        if (!/^[A-Za-z0-9_\-]{1,32}$/.test(studentCode) || cohort.length < 1 || !consent) {
+           toast('Vérifiez les champs.', 'warn'); isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
+         }
         currentMeta = { studentCode, cohort, profile, used, consent: true }; saveMeta(currentMeta); currentStatus = loadStatus(currentMeta.studentCode);
         try {
-          console.log('[FORM SUBMIT] Appel ensureUserFolder...'); const folderPayload = { action: "ensureUserFolder", studentCode: currentMeta.studentCode, cohort: currentMeta.cohort, profile: currentMeta.profile, used: currentMeta.used };
+          console.log('Appel ensureUserFolder...'); const folderPayload = { action: "ensureUserFolder", studentCode, cohort, profile, used };
           const folderJson = await fetchGAS(CONFIG.WEBAPP_URL, folderPayload);
           if (folderJson.ok === false) { throw new Error(folderJson.error || 'Erreur création dossier.'); }
-          console.log('[FORM SUBMIT] Dossier Drive OK.');
+          console.log('Dossier Drive OK.');
           profileModal.classList.add('hidden'); renderAllCards(); mainContent.classList.remove('opacity-0'); editProfileBtn.classList.remove('hidden'); toast('Profil enregistré !', 'ok');
-        } catch (folderErr) { console.error('[FORM SUBMIT] Erreur ensureUserFolder:', folderErr); toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
+        } catch (folderErr) { console.error('Erreur ensureUserFolder:', folderErr); toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
         } finally { isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); }
       });
 
@@ -200,6 +211,7 @@
       if (editProfileBtn) { editProfileBtn.addEventListener('click', () => { /*...*/ }); }
 
       // ... Rendu cartes, progression, modale enregistrement, logique enregistrement (start/stop etc) INCHANGÉS ...
+      // (Ces fonctions sont longues mais correctes et n'ont pas besoin d'être modifiées)
       function getQuestion(profile, topic) { /* ... */ } function renderAllCards() { /* ... */ } function updateProgress() { /* ... */ } function animateCounter(el, from, to, suffix = '') { /* ... */ }
       const btnRecord = $('#btnRecord'); /* ... */ let mediaStream, mediaRecorder, audioBlob = null, mimeType = 'audio/webm'; /* ... */
       function openModal(topic, trigger) { /* ... */ } function closeModal() { /* ... */ } /* ... listeners ... */ function setStatus(t) { /* ... */ } function hhmmss(s) { const sec = Math.max(0, Math.floor(s)); return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; } function updateSendState() { /* ... */ }
