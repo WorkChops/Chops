@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale-1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link id="favicon" rel="icon" href="./assets/favicon.png">
 
   <!-- =================================================================================== -->
@@ -18,7 +18,7 @@
 
       // --- Branding ---
       BRAND: {
-        TITLE: "Feedback CHOPS v21", 
+        TITLE: "Feedback CHOPS - Exprimez vous !", 
         LOGO_URL: "./CHOPStandard.svg",
         MARK_URL: "./CHOPiBasic.svg",
         FAVICON_URL: "./CHOPiBasic.svg"
@@ -167,14 +167,27 @@
     // Micro-fonction de sélection
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => document.querySelectorAll(selector);
+    
+    // NOUVEAU: Limite des notifications
+    const MAX_TOASTS = 4;
 
     /* =================================================================================== */
     /* ============================== NOTIFICATIONS (TOASTS) =========================== */
     /* =================================================================================== */
     
-    function toast(msg, type = 'info') {
+    // MODIFIÉ: Ajout de 'duration' et de la limite MAX_TOASTS
+    function toast(msg, type = 'info', duration = 3500) {
       const w = $('#toasts');
       if (!w) return;
+      
+      // NOUVEAU: Gérer la limite
+      while (w.children.length >= MAX_TOASTS) {
+        const oldToast = w.firstElementChild;
+        if (oldToast) {
+          oldToast.remove(); // Supprime le plus ancien
+        }
+      }
+
       const d = document.createElement('div');
       let c = 'bg-gray-700'; // info
       if (type === 'ok') c = 'bg-green-600';
@@ -192,10 +205,11 @@
           });
       });
 
+      // Utilise la durée passée en paramètre
       setTimeout(() => {
         d.classList.add('translate-x-full', 'opacity-0');
         d.addEventListener('transitionend', () => d.remove(), { once: true });
-      }, 3500);
+      }, duration);
     }
 
     /* =================================================================================== */
@@ -953,7 +967,19 @@
               currentStatus[topic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
               saveStatus(currentMeta.studentCode, currentStatus);
               renderAllCards(); // Met à jour la carte en "Répondu"
-              toast(`Réponse pour ${topicLabel} envoyée !`, 'ok');
+              toast(`Réponse pour ${topicLabel} envoyée !`, 'ok'); // Durée par défaut 3.5s
+
+              // NOUVEAU: Vérifier la complétion totale
+              const validTopics = Array.isArray(topics) ? topics : [];
+              const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
+              const total = validTopics.length;
+
+              if (total > 0 && done === total) {
+                // On attend 1s pour le laisser lire le premier toast
+                setTimeout(() => {
+                  toast("🎉 Bravo et merci ! Vous avez complété tous les feedbacks. Votre contribution est précieuse !", 'ok', 6000); // 6 secondes
+                }, 1000); // 1s après le toast "Réponse envoyée"
+              }
 
           } catch (err) {
               // 3. ÉCHEC
