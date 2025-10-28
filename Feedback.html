@@ -18,7 +18,7 @@
 
       // --- Branding ---
       BRAND: {
-        TITLE: "Feedback CHOPS - Exprimez vous !", 
+        TITLE: "Feedback CHOPS v21", 
         LOGO_URL: "./CHOPStandard.svg",
         MARK_URL: "./CHOPiBasic.svg",
         FAVICON_URL: "./CHOPiBasic.svg"
@@ -56,9 +56,10 @@
     .progress-bar-inner { background: linear-gradient(90deg, var(--accent-primary), var(--accent-success)); background-size: 200% 100%; animation: progress-active 2s ease-in-out infinite; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); border-radius: 9999px;} /* Ajout radius barre */
     @keyframes progress-active { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
     .hidden { display: none; }
-    #profileModal { align-items: flex-start; padding-top: 1rem; padding-bottom: 1rem; }
-    @media (min-width: 640px) { #profileModal { align-items: center; } }
-    #profileModal .glass-bubble { overflow-y: auto; max-height: 90vh; }
+    /* MODIFIÉ: Ajout de #completionModal */
+    #profileModal, #completionModal { align-items: flex-start; padding-top: 1rem; padding-bottom: 1rem; }
+    @media (min-width: 640px) { #profileModal, #completionModal { align-items: center; } }
+    #profileModal .glass-bubble, #completionModal .glass-bubble { overflow-y: auto; max-height: 90vh; }
     #profileModal form { overflow-y: visible; padding-bottom: 0; flex-grow: 0; }
     .modal-footer { padding-top: 1rem; text-align: right; }
     .modal-footer.flex { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; }
@@ -159,6 +160,35 @@
       </div>
     </div>
   </div>
+  
+  <!-- NOUVEAU: MODALE DE FÉLICITATIONS -->
+  <div id="completionModal" class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="completionModalTitle">
+    <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" aria-hidden="true"></div>
+    <div class="glass-bubble relative w-full max-w-lg p-6 sm:p-8 max-h-[90vh] overflow-y-auto text-center">
+      <h2 id="completionModalTitle" class="text-3xl font-bold text-gray-900 mb-3">🎉 Félicitations !</h2>
+      <p class="text-base text-gray-700 mb-6">
+        Vous avez complété tous les feedbacks. Merci infiniment pour votre contribution précieuse !
+      </p>
+      
+      <!-- Bandeau Email -->
+      <div class="p-4 rounded-lg bg-white/50 border border-white/80 text-left space-y-2">
+         <label for="userEmail" class="block text-sm font-medium text-gray-800">Laissez-nous votre email pour un suivi (optionnel) :</label>
+         <form id="emailForm" class="flex flex-col sm:flex-row gap-2">
+            <input id="userEmail" type="email" placeholder="votre.email@exemple.com" class="form-input flex-1 px-3 py-2" inputmode="email">
+            <button id="submitEmailBtn" type="submit" class="btn btn-secondary whitespace-nowrap">Envoyer</button>
+         </form>
+         <p id="emailStatus" class="text-xs text-gray-600 mt-1"></p>
+      </div>
+      
+      <!-- Footer -->
+      <div class="modal-footer">
+          <button id="modalCompleteClose" class="btn btn-primary">
+            Terminer
+          </button>
+      </div>
+    </div>
+  </div>
+
 
   <script>
     // Configuration globale chargée depuis le <head>
@@ -170,6 +200,38 @@
     
     // NOUVEAU: Limite des notifications
     const MAX_TOASTS = 4;
+    
+    // NOUVEAU: Contexte Audio pour le son
+    let audioCtx;
+    function playSuccessSound() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.05); // Moins fort
+
+            oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            oscillator.frequency.linearRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+
+            oscillator.start(audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch (e) {
+            console.warn("Impossible de jouer le son", e);
+        }
+    }
+
 
     /* =================================================================================== */
     /* ============================== NOTIFICATIONS (TOASTS) =========================== */
@@ -180,7 +242,7 @@
       const w = $('#toasts');
       if (!w) return;
       
-      // NOUVEAU: Gérer la limite
+      // Gérer la limite
       while (w.children.length >= MAX_TOASTS) {
         const oldToast = w.firstElementChild;
         if (oldToast) {
@@ -268,7 +330,16 @@
       const progressBar = $('#progressBar');
       const profileSpinner = $('#profileSpinner'); 
       
-      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner) {
+      // NOUVEAU: Sélecteurs Modale Complétion
+      const completionModal = $('#completionModal');
+      const modalCompleteClose = $('#modalCompleteClose');
+      const emailForm = $('#emailForm');
+      const submitEmailBtn = $('#submitEmailBtn');
+      const userEmail = $('#userEmail');
+      const emailStatus = $('#emailStatus');
+      
+      
+      if (!profileModal || !metaForm || !saveProfileBtn || !mainContent || !profileSpinner || !completionModal) {
           console.error("Éléments UI principaux manquants !");
           toast("Erreur critique: Interface incomplète.", "err");
           return;
@@ -276,15 +347,11 @@
 
       // --- État de l'application ---
       let currentMeta = { studentCode: '', cohort: '', profile: 'etudiant', used: 'CHOPS_plus_CHOPi', consent: false };
-      // currentStatus peut contenir:
-      // { topic1: { done: true, at: '...', durationSec: 30 } }
-      // { topic2: { sending: true } }
-      // { topic3: { failed: true } }
       let currentStatus = {};
       let topics = [];
       let currentTopic = null;
       let lastTrigger = null;
-      let sendingDebounce = false; // Anti-double-clic sur "Envoyer"
+      let sendingDebounce = false; 
       let currentAnimatedPct = 0;
       let isSubmittingProfile = false;
 
@@ -314,7 +381,6 @@
       function initProfile() {
         console.log("Initialisation du profil...");
         const meta = loadMeta();
-        // Vérifie si l'ID de dossier est présent (important depuis la v2)
         if (meta && meta.studentCode && meta.cohort && meta.profile && meta.used && meta.consent === true && meta.userFolderDriveId) {
           console.log("Profil valide (avec ID dossier) trouvé:", meta);
           currentMeta = meta;
@@ -367,11 +433,9 @@
            isSubmittingProfile = false; saveProfileBtn.disabled = false; saveProfileBtn.classList.remove('btn-disabled'); profileSpinner.classList.add('hidden'); return;
         }
         
-        // 1. Sauvegarde locale (provisoire, sans ID dossier)
         currentMeta = { studentCode, cohort, profile, used, consent: true };
         
         try {
-          // 2. Appel au backend pour créer/récupérer dossier
           console.log('Appel ensureUserFolder...');
           const folderPayload = { action: "ensureUserFolder", studentCode, cohort, profile, used };
           const folderJson = await fetchGAS(CONFIG.WEBAPP_URL, folderPayload);
@@ -383,10 +447,9 @@
             throw new Error("Réponse backend invalide (ID dossier manquant).");
           }
           
-          // 3. Succès : Sauvegarde finale avec l'ID dossier
           currentMeta.userFolderDriveId = folderJson.userFolderDriveId;
-          saveMeta(currentMeta); // Sauvegarde complète
-          currentStatus = loadStatus(currentMeta.studentCode); // Charge le statut pour ce code
+          saveMeta(currentMeta); 
+          currentStatus = loadStatus(currentMeta.studentCode); 
           console.log(`Dossier Drive OK. ID sauvegardé: ${currentMeta.userFolderDriveId}`);
           
           profileModal.classList.add('hidden');
@@ -398,7 +461,6 @@
         } catch (folderErr) {
           console.error('Erreur ensureUserFolder:', folderErr);
           toast(`Erreur config Drive : ${folderErr.message}.`, 'err');
-          // Ne cache pas la modale, l'utilisateur doit pouvoir réessayer
         } finally {
           isSubmittingProfile = false;
           saveProfileBtn.disabled = false;
@@ -410,12 +472,47 @@
       // --- Bouton editProfile ---
       if (editProfileBtn) {
           editProfileBtn.addEventListener('click', () => {
-            // Force la re-saisie pour recréer/vérifier l'ID dossier au cas où
             profileModal.classList.remove('hidden');
           });
       }
+      
+      // --- NOUVEAU: Listeners pour la modale de complétion ---
+      if(modalCompleteClose) {
+          modalCompleteClose.addEventListener('click', () => {
+              completionModal.classList.add('hidden');
+              // Réinitialiser le formulaire email
+              if (userEmail) userEmail.value = '';
+              if (emailStatus) emailStatus.textContent = '';
+              if (userEmail) userEmail.disabled = false;
+              if (submitEmailBtn) submitEmailBtn.disabled = false;
+              if (submitEmailBtn) submitEmailBtn.classList.remove('btn-disabled');
+          });
+      }
+      
+      if(emailForm) {
+          emailForm.addEventListener('submit', (e) => {
+              e.preventDefault();
+              const email = userEmail.value;
+              if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                  // On ne l'envoie NULLE PART, on simule juste le succès
+                  emailStatus.textContent = "Merci ! Votre email est enregistré.";
+                  emailStatus.className = "text-xs text-green-700 mt-1";
+                  userEmail.disabled = true;
+                  submitEmailBtn.disabled = true;
+                  submitEmailBtn.classList.add('btn-disabled');
+                  
+                  // NOTE: Ici, on pourrait appeler une autre fonction fetchGAS
+                  // avec action: "saveEmail" si le backend était prêt.
+                  
+              } else {
+                  emailStatus.textContent = "Veuillez entrer un email valide.";
+                  emailStatus.className = "text-xs text-red-600 mt-1";
+              }
+          });
+      }
 
-      // --- Rendu des cartes et progression (MODIFIÉ) ---
+
+      // --- Rendu des cartes et progression ---
       function getQuestion(profile, topic) {
         try {
            let effectiveProfile = profile || 'autre';
@@ -458,7 +555,6 @@
            if (cardsGrid) cardsGrid.innerHTML = ''; 
            
            topics.forEach(topic => {
-             // MODIFIÉ: Gère les 3 états (done, sending, failed)
              const entry = currentStatus[topic];
              const done = !!entry?.done;
              const sending = !!entry?.sending;
@@ -473,9 +569,8 @@
                               ${sending ? 'opacity-50 cursor-not-allowed' : ''}
                               ${failed ? 'border-red-400 hover:border-red-500' : ''}`;
              
-             if (sending) card.disabled = true; // Désactive la carte pendant l'envoi
+             if (sending) card.disabled = true; 
 
-             // MODIFIÉ: Logique du badge de statut
              let statusBadge = '';
              if (sending) {
                  statusBadge = `<span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center gap-1">
@@ -569,22 +664,17 @@
       let mediaStream, mediaRecorder, audioChunks = [], audioBlob = null, audioUrl = null, mimeType = 'audio/webm';
       let startedAt = 0, pausedAt = 0, totalPausedTime = 0;
       let timerInterval = null;
-      let audioContext, analyser, dataArray;
+      let analyser, dataArray; // Retiré audioContext d'ici
       
-      // MODIFIÉ: Gère les états "sending" et "failed"
       function openModal(topic, trigger) {
-        // Vérifie si ce sujet est en cours d'envoi
         if (currentStatus[topic]?.sending) {
            toast('Envoi en cours pour ce sujet...', 'warn');
            return; 
         }
 
-        // Si l'envoi a échoué, on réinitialise l'état pour retenter
         if (currentStatus[topic]?.failed) {
             delete currentStatus[topic].failed;
-            // Ne pas sauvegarder, l'état "failed" n'est que temporaire
-            // saveStatus(currentMeta.studentCode, currentStatus);
-            renderAllCards(); // Met à jour l'UI pour retirer "Échec"
+            renderAllCards(); 
         }
 
         if (!currentMeta.consent || !currentMeta.studentCode || !currentMeta.cohort || !currentMeta.userFolderDriveId) {
@@ -612,7 +702,7 @@
         mediaStream?.getTracks().forEach(track => track.stop());
         recordModal.classList.add('hidden'); 
         if (lastTrigger) lastTrigger.focus();
-        currentTopic = null; // Important
+        currentTopic = null; 
       }
       
       if (modalClose) modalClose.addEventListener('click', closeModal);
@@ -628,7 +718,6 @@
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
       
       function updateSendState() {
-        // MODIFIÉ: N'utilise plus la variable globale 'sending', mais l'anti-double-clic
         const canSend = currentMeta.consent && !!audioBlob && !sendingDebounce;
         if (btnSend) {
             btnSend.disabled = !canSend;
@@ -643,8 +732,7 @@
           try { mediaRecorder.stop(); } catch(e) {}
         }
         mediaRecorder = null;
-        audioContext?.close().catch(e => {});
-        audioContext = null;
+        // audioContext n'est pas recréé ici, on garde le global
         
         clearInterval(timerInterval); timerInterval = null;
         
@@ -674,7 +762,7 @@
         }
       }
 
-      // --- Logique d'enregistrement (Inchangée) ---
+      // --- Logique d'enregistrement ---
       
       if(btnRecord) btnRecord.addEventListener('click', startRecording);
       if(btnPause) btnPause.addEventListener('click', pauseRecording);
@@ -696,21 +784,24 @@
         }
 
         try {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          // Utilise le contexte audio global
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+             audioCtx.resume().catch(e => {});
+          }
           
           document.addEventListener("visibilitychange", () => {
-            if (!audioContext || audioContext.state === 'closed') return;
+            if (!audioCtx || audioCtx.state === 'closed') return;
             if (document.visibilityState === 'visible') {
-              audioContext.resume().catch(e => {});
+              audioCtx.resume().catch(e => {});
             }
           });
-          if (audioContext.state === 'suspended') {
-             audioContext.resume().catch(e => {});
-          }
 
-          analyser = audioContext.createAnalyser();
+          analyser = audioCtx.createAnalyser();
           analyser.fftSize = 256; dataArray = new Uint8Array(analyser.frequencyBinCount);
-          const source = audioContext.createMediaStreamSource(mediaStream);
+          const source = audioCtx.createMediaStreamSource(mediaStream);
           source.connect(analyser);
 
           const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -779,7 +870,7 @@
             updateSendState();
             
             mediaStream?.getTracks().forEach(t => t.stop()); mediaStream = null;
-            audioContext?.close().catch(e => {});
+            // Ne pas fermer l'audioContext
           };
 
           mediaRecorder.onerror = (event) => {
@@ -895,22 +986,19 @@
 
       if(btnSend) btnSend.addEventListener('click', submitOne);
 
-      /** MODIFIÉ: Envoie la réponse en arrière-plan. */
+      /** Envoie la réponse en arrière-plan. */
       async function submitOne() {
-         // Utilise 'sendingDebounce' pour éviter le double-clic
          if (sendingDebounce || !audioBlob) return;
          
          sendingDebounce = true;
          setStatus('Préparation envoi...');
-         updateSendState(); // Désactive le bouton Envoyer
+         updateSendState();
          
          try {
-           // 1. Préparation rapide (synchrone)
-           const fileBase64 = await blobToBase64(audioBlob); // C'est rapide
+           const fileBase64 = await blobToBase64(audioBlob); 
            const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
            const durationSec = (mm * 60 + ss) || 0;
            
-           // Sauvegarde les variables avant de fermer la modale
            const topicToUpdate = currentTopic;
            const payload = {
              action: "uploadAudio",
@@ -923,39 +1011,33 @@
              clientUA: navigator.userAgent
            };
 
-           // 2. Mise à jour IMMÉDIATE de l'interface
            currentStatus[topicToUpdate] = { sending: true };
-           renderAllCards(); // Affiche "Envoi en cours..." sur la carte
+           renderAllCards(); 
            toast('Envoi de votre réponse...');
-           closeModal(); // Ferme la modale IMMÉDIATEMENT
+           closeModal(); 
            
-           // 3. Lancement de la tâche de fond (ne pas "await" ici)
            runUploadTask(payload, topicToUpdate, durationSec);
 
          } catch (err) {
-           // Erreur pendant la préparation (ex: blobToBase64)
            console.error('Erreur préparation submitOne:', err);
            toast(`Erreur préparation : ${err.message}. Réessayez.`, 'err');
            setStatus('Erreur préparation');
-           // Si la modale est encore ouverte, réinitialise l'état
            if (currentTopic) {
              delete currentStatus[currentTopic].sending;
              renderAllCards();
            }
          } finally {
-           // Libère le verrou anti-double-clic
            sendingDebounce = false;
-           updateSendState(); // Ré-active le bouton (si la modale était restée ouverte)
+           updateSendState();
          }
-      } // Fin submitOne
+      } 
 
-      /** NOUVEAU: Fonction qui gère l'envoi en arrière-plan */
+      /** Fonction qui gère l'envoi en arrière-plan */
       async function runUploadTask(payload, topic, durationSec) {
           const topicLabel = `"${topic.charAt(0).toUpperCase() + topic.slice(1)}"`;
           console.log(`[BG Task ${topic}] Démarrage envoi...`);
 
           try {
-              // 1. Exécute le fetch (c'est la partie lente)
               const jsonResult = await fetchGAS(CONFIG.WEBAPP_URL, payload);
 
               if (jsonResult.ok === false) {
@@ -966,30 +1048,39 @@
               console.log(`[BG Task ${topic}] Succès.`);
               currentStatus[topic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
               saveStatus(currentMeta.studentCode, currentStatus);
-              renderAllCards(); // Met à jour la carte en "Répondu"
-              toast(`Réponse pour ${topicLabel} envoyée !`, 'ok'); // Durée par défaut 3.5s
+              renderAllCards(); 
+              toast(`Réponse pour ${topicLabel} envoyée !`, 'ok'); 
 
-              // NOUVEAU: Vérifier la complétion totale
+              // MODIFIÉ: Vérifier la complétion totale
               const validTopics = Array.isArray(topics) ? topics : [];
               const done = validTopics.filter(t => !!currentStatus[t]?.done).length;
               const total = validTopics.length;
 
               if (total > 0 && done === total) {
-                // On attend 1s pour le laisser lire le premier toast
+                // On attend 1s pour la fluidité
                 setTimeout(() => {
-                  toast("🎉 Bravo et merci ! Vous avez complété tous les feedbacks. Votre contribution est précieuse !", 'ok', 6000); // 6 secondes
-                }, 1000); // 1s après le toast "Réponse envoyée"
+                  // Appelle la modale au lieu du toast
+                  showCompletionModal();
+                }, 1000); 
               }
 
           } catch (err) {
               // 3. ÉCHEC
               console.error(`[BG Task ${topic}] Échec:`, err);
-              currentStatus[topic] = { failed: true }; // Nouvel état "failed"
-              saveStatus(currentMeta.studentCode, currentStatus); // Sauvegarde l'échec pour info
-              renderAllCards(); // Met à jour la carte en "Échec"
+              currentStatus[topic] = { failed: true }; 
+              saveStatus(currentMeta.studentCode, currentStatus); 
+              renderAllCards(); 
               toast(`Erreur pour ${topicLabel}: ${err.message}`, 'err');
           }
       }
+      
+      // NOUVEAU: Fonction pour afficher la modale de fin
+      function showCompletionModal() {
+          playSuccessSound();
+          completionModal.classList.remove('hidden');
+          modalCompleteClose.focus();
+      }
+      
       
       // --- Démarrage ---
       initProfile(); // Lancer l'initialisation
