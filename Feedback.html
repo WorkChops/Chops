@@ -1021,80 +1021,79 @@
 
       /** Envoie la réponse finale. */
       async function submitOne() {
-        if (sending || !audioBlob) {
-           console.warn("submitOne: Ignoré (envoi déjà en cours ou pas d'audioBlob)");
-           return;
-        }
-
-        sending = true;
-        setStatus('Préparation envoi...'); // Changé ici
-        if (modalClose) modalClose.disabled = true;
-        if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
-        updateSendState(); // Désactive le bouton Envoyer
-        toast('Envoi de votre réponse...');
-
         try {
-          // --- VÉRIFICATION CRUCIALE DU MIME TYPE ---
-          console.log("----------------------------------------");
-          console.log("Frontend submitOne: Vérification avant envoi...");
-
-          // 1. Quelle est la valeur de la variable globale 'mimeType' ?
-          console.log("Variable globale 'mimeType':", mimeType, "(Type:", typeof mimeType, ")");
-
-          // 2. Préparation du payload
+          setStatus('Préparation envoi...');
           const fileBase64 = await blobToBase64(audioBlob);
           const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
           const durationSec = (mm * 60 + ss) || 0;
 
-          // 3. Construction de l'objet payload
           const payload = {
             action: "uploadAudio", ...currentMeta, topic: currentTopic,
-            durationSec: durationSec,
-            mimeType: mimeType, // Utilisation de la variable globale
+            durationSec: durationSec, mimeType: mimeType, // La variable globale mimeType
             transcription: "[CLIENT_TRANSCRIPTION_DISABLED]", // Placeholder
             fileBase64: fileBase64, clientUA: navigator.userAgent
           };
 
-          // 4. Quelle est la valeur DANS le payload ?
-          console.log("Payload.mimeType:", payload.mimeType, "(Type:", typeof payload.mimeType, ")");
-
-          // 5. TEST ABSOLU : Si mimeType est invalide, on arrête ICI
-          if (!payload.mimeType || typeof payload.mimeType !== 'string' || payload.mimeType.length < 5) {
-             const errorMsg = `ERREUR FRONTEND: MimeType invalide DÉTECTÉ AVANT ENVOI ('${payload.mimeType}')`;
-             console.error(errorMsg);
-             alert(errorMsg); // Afficher à l'utilisateur
-             throw new Error(errorMsg); // Arrêter l'exécution ici
-          }
-
-          console.log("Frontend: Payload PRÊT À ÊTRE ENVOYÉ :");
-          console.log("Action:", payload.action);
+          // --- LOGGING SIMPLIFIÉ ---
+          console.log("----------------------------------------");
+          console.log("Frontend: Envoi du payload à", CONFIG.WEBAPP_URL);
           console.log("MimeType envoyé:", payload.mimeType);
-          console.log("URL Cible:", CONFIG.WEBAPP_URL);
-          // alert("Frontend va envoyer mimeType: " + payload.mimeType); // On peut le désactiver si c'est clair
-          // --- FIN VÉRIFICATION ---
+          // --- FIN LOGGING ---
 
           setStatus('Envoi en cours...');
 
-          // Appel au backend (utilisation de fetchGAS qui gère déjà le JSON)
-          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+          // Appel au backend - On vérifie juste si la connexion réussit (HTTP 200 OK)
+          const response = await fetch(CONFIG.WEBAPP_URL, {
+            method: 'POST', mode: 'cors', credentials: 'omit',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload), redirect: 'follow'
+          });
 
-          // Vérification de la réponse (identique à avant)
-          if (json.ok === false) {
-            console.error("Backend a renvoyé une erreur:", json.error);
-            throw new Error(json.error || 'Erreur inconnue renvoyée par le backend.');
+          // Si la réponse N'EST PAS OK (erreur réseau, 4xx, 5xx)
+          if (!response.ok) {
+              let errorText = `Erreur réseau ${response.status}: ${response.statusText}`;
+              try {
+                  // Essayer de lire le corps de l'erreur, s'il existe
+                  const bodyText = await response.text();
+                  console.error("Réponse d'erreur brute du backend:", bodyText);
+                  // Essayer de parser comme JSON pour récupérer le message d'erreur structuré
+                  const errJson = JSON.parse(bodyText);
+                  if (errJson && errJson.error) {
+                      errorText = errJson.error; // Utiliser l'erreur structurée si possible
+                  } else if (bodyText) {
+                      errorText = bodyText.slice(0, 100); // Sinon, un extrait du texte brut
+                  }
+              } catch(e) {
+                 // Ignorer les erreurs de lecture/parsing du corps de l'erreur
+                 console.warn("Impossible de lire/parser le corps de la réponse d'erreur");
+              }
+              throw new Error(errorText); // Lancer l'erreur pour le bloc catch
           }
 
-          // Si on arrive ici, c'est un succès
-          console.log("Frontend: Réponse de succès reçue du backend !");
+          // Si on arrive ici, la réponse était HTTP 200 OK
+          console.log("Frontend: Communication avec le backend réussie (HTTP 200 OK).");
           setStatus('Terminé ✅'); toast('Réponse envoyée !', 'ok');
 
+          // Mise à jour locale (identique à avant)
           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
           saveStatus(currentMeta.studentCode, currentStatus);
-
           renderAllCards();
           closeModal();
 
-        } catch (err) { // Attrape TOUTES les erreurs (vérification mimeType, fetch, json.ok === false)
+        } catch (err) { // Attrape les erreurs fetch OU si response.ok était false
+          console.error('Erreur finale dans submitOne:', err);
+          // Affiche l'erreur interceptée (soit l'erreur réseau, soit celle extraite de la réponse)
+          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
+          setStatus('Erreur d’envoi');
+
+        } finally { // S'exécute toujours
+          sending = false;
+          if (modalClose) modalClose.disabled = false;
+          if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
+          updateSendState();
+          console.log("----------------------------------------");
+        }
+        catch (err) { // Attrape TOUTES les erreurs (vérification mimeType, fetch, json.ok === false)
           console.error('Erreur finale dans submitOne:', err);
           toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
           setStatus('Erreur d’envoi');
