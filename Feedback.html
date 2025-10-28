@@ -1021,54 +1021,93 @@
 
       /** Envoie la réponse finale. */
       async function submitOne() {
-        if (sending || !audioBlob) return; 
-        
-        sending = true; 
-        
-        // CORRECTION FEEDBACK UTILISATEUR: Mettre à jour le statut et désactiver les boutons
-        setStatus('Envoi et transcription en cours...'); 
+        if (sending || !audioBlob) {
+           console.warn("submitOne: Ignoré (envoi déjà en cours ou pas d'audioBlob)");
+           return;
+        }
+
+        sending = true;
+        setStatus('Préparation envoi...'); // Changé ici
         if (modalClose) modalClose.disabled = true;
         if (btnReRecord) btnReRecord.disabled = true; btnReRecord.classList.add('btn-disabled');
-        
         updateSendState(); // Désactive le bouton Envoyer
         toast('Envoi de votre réponse...');
-        
+
         try {
-          setStatus('Préparation envoi...'); const fileBase64 = await blobToBase64(audioBlob);
+          // --- VÉRIFICATION CRUCIALE DU MIME TYPE ---
+          console.log("----------------------------------------");
+          console.log("Frontend submitOne: Vérification avant envoi...");
+
+          // 1. Quelle est la valeur de la variable globale 'mimeType' ?
+          console.log("Variable globale 'mimeType':", mimeType, "(Type:", typeof mimeType, ")");
+
+          // 2. Préparation du payload
+          const fileBase64 = await blobToBase64(audioBlob);
           const [mm, ss] = timerEl ? timerEl.textContent.split(':').map(Number) : [0, 0];
           const durationSec = (mm * 60 + ss) || 0;
 
+          // 3. Construction de l'objet payload
           const payload = {
             action: "uploadAudio", ...currentMeta, topic: currentTopic,
-            durationSec: durationSec, mimeType: mimeType,
-            transcription: audioTranscription, // C'est juste un placeholder
+            durationSec: durationSec,
+            mimeType: mimeType, // Utilisation de la variable globale
+            transcription: "[CLIENT_TRANSCRIPTION_DISABLED]", // Placeholder
             fileBase64: fileBase64, clientUA: navigator.userAgent
           };
 
-          setStatus('Envoi et transcription en cours...'); // Répéter au cas où
-          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
-          if (json.ok === false) { throw new Error(json.error || 'Erreur inconnue enregistrement.'); }
+          // 4. Quelle est la valeur DANS le payload ?
+          console.log("Payload.mimeType:", payload.mimeType, "(Type:", typeof payload.mimeType, ")");
 
+          // 5. TEST ABSOLU : Si mimeType est invalide, on arrête ICI
+          if (!payload.mimeType || typeof payload.mimeType !== 'string' || payload.mimeType.length < 5) {
+             const errorMsg = `ERREUR FRONTEND: MimeType invalide DÉTECTÉ AVANT ENVOI ('${payload.mimeType}')`;
+             console.error(errorMsg);
+             alert(errorMsg); // Afficher à l'utilisateur
+             throw new Error(errorMsg); // Arrêter l'exécution ici
+          }
+
+          console.log("Frontend: Payload PRÊT À ÊTRE ENVOYÉ :");
+          console.log("Action:", payload.action);
+          console.log("MimeType envoyé:", payload.mimeType);
+          console.log("URL Cible:", CONFIG.WEBAPP_URL);
+          // alert("Frontend va envoyer mimeType: " + payload.mimeType); // On peut le désactiver si c'est clair
+          // --- FIN VÉRIFICATION ---
+
+          setStatus('Envoi en cours...');
+
+          // Appel au backend (utilisation de fetchGAS qui gère déjà le JSON)
+          const json = await fetchGAS(CONFIG.WEBAPP_URL, payload);
+
+          // Vérification de la réponse (identique à avant)
+          if (json.ok === false) {
+            console.error("Backend a renvoyé une erreur:", json.error);
+            throw new Error(json.error || 'Erreur inconnue renvoyée par le backend.');
+          }
+
+          // Si on arrive ici, c'est un succès
+          console.log("Frontend: Réponse de succès reçue du backend !");
           setStatus('Terminé ✅'); toast('Réponse envoyée !', 'ok');
-          
+
           currentStatus[currentTopic] = { done: true, at: new Date().toISOString(), durationSec: durationSec };
           saveStatus(currentMeta.studentCode, currentStatus);
-          
-          renderAllCards(); 
+
+          renderAllCards();
           closeModal();
-        } catch (err) {
-          console.error('Erreur envoi final:', err);
-          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err'); 
+
+        } catch (err) { // Attrape TOUTES les erreurs (vérification mimeType, fetch, json.ok === false)
+          console.error('Erreur finale dans submitOne:', err);
+          toast(`Erreur d’envoi : ${err.message}. Réessayez.`, 'err');
           setStatus('Erreur d’envoi');
-        } finally {
-          sending = false; 
-          // CORRECTION FEEDBACK UTILISATEUR: Réactiver les boutons
+
+        } finally { // S'exécute toujours
+          sending = false;
           if (modalClose) modalClose.disabled = false;
           if (btnReRecord) btnReRecord.disabled = false; btnReRecord.classList.remove('btn-disabled');
           updateSendState();
+          console.log("----------------------------------------");
         }
-      }
-
+      } // Fin de submitOne
+      
       // --- Démarrage ---
       initProfile(); // Lancer l'initialisation
       console.log("Initialisation terminée.");
